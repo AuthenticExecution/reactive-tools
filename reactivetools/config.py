@@ -14,6 +14,7 @@ from .dumpers import *
 from .loaders import *
 from .rules.evaluators import *
 from .descriptor import DescriptorType
+from .manager import Manager
 
 from .nodes import node_rules, node_funcs, node_cleanup_coros
 from .modules import module_rules, module_funcs, module_cleanup_coros
@@ -28,8 +29,10 @@ class Config:
         self.nodes = []
         self.modules = []
         self.connections = []
-        self.connections_id = 0
+        self.connections_current_id = 0
+        self.events_current_id = 0
         self.output_type = None
+        self.manager = None
 
     def get_node(self, name):
         for n in self.nodes:
@@ -219,6 +222,8 @@ def load(file_name, output_type=None):
     else:
         config.periodic_events = []
 
+    config.manager = _load_manager(contents['manager'], config)
+
     return config
 
 
@@ -258,6 +263,11 @@ def _load_periodic_event(events_dict, config):
     return PeriodicEvent.load(events_dict, config)
 
 
+def _load_manager(man_dict, config):
+    evaluate_rules(os.path.join("default", "manager.yaml"), man_dict)
+    return Manager.load(man_dict, config)
+
+
 def evaluate_rules(rules_file, dict):
     rules = load_rules(rules_file)
 
@@ -285,6 +295,7 @@ def dump_config(config, file_name):
 def _(config):
     dump(config.nodes)
     return {
+            'manager': dump(config.manager),
             'nodes': dump(config.nodes),
             'modules': dump(config.modules),
             'connections_current_id': config.connections_current_id,
@@ -312,3 +323,8 @@ def _(conn):
 @dump.register(PeriodicEvent)
 def _(event):
     return event.dump()
+
+
+@dump.register(Manager)
+def _(man):
+    return man.dump()

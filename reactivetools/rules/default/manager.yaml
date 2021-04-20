@@ -1,0 +1,22 @@
+# PeriodicEvent rules
+
+## required keys ##
+host required:
+  is_present(dict, "host")
+
+port required:
+  is_present(dict, "port")
+
+key required:
+  is_present(dict, "key")
+
+
+## type of the required values ##
+host must be a str:
+  isinstance(dict["host"], str)
+
+port must be a positive u16:
+  is_positive_number(dict["port"])
+
+key must be a list:
+  isinstance(dict["key"], list)
