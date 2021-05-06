@@ -24,12 +24,12 @@
         {
             "type": "native",
             "name": "sm1",
-            "node": "node1",
+            "node": "node1"
         },
         {
             "type": "native",
             "name": "sm2",
-            "node": "node1",
+            "node": "node1"
         },
         {
             "type": "sancus",
