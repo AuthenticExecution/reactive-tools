@@ -169,27 +169,3 @@ class SancusNode(Node):
                      module.name, conn_io.name, self.name,
                      binascii.hexlify(key).decode('ascii'))
                 )
-
-
-    async def connect(self, to_module, conn_id):
-        module_id = await to_module.get_id()
-
-        # HACK for sancus event manager:
-        # if ip address is 0.0.0.0 it handles the connection as local
-        ip_address = b'\x00' * 4 if \
-                to_module.node is self else \
-                to_module.node.ip_address.packed
-
-        payload = tools.pack_int16(conn_id)                           + \
-                  tools.pack_int16(module_id)                         + \
-                  tools.pack_int16(to_module.node.reactive_port)      + \
-                  ip_address
-
-        command = CommandMessage(ReactiveCommand.Connect,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
-
-        await self._send_reactive_command(
-                command,
-                log='Connecting id {} to {}'.format(conn_id, to_module.name))

@@ -161,6 +161,7 @@ class Node(ABC):
 
         payload = tools.pack_int16(conn_id)                           + \
                   tools.pack_int16(module_id)                         + \
+                  tools.pack_int8(int(to_module.node is self))        + \
                   tools.pack_int16(to_module.node.reactive_port)      + \
                   to_module.node.ip_address.packed
 
