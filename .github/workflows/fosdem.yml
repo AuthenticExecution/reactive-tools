@@ -1,0 +1,41 @@
+name: Fosdem
+on:
+  schedule:
+    - cron: '0 0 2 */1 *' # Every month
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  REPO: gianlu33/reactive-tools:fosdem
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    steps:
+    -
+      uses: actions/checkout@master
+    -
+      name: Login
+      run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+    -
+      name: Build
+      run: docker build -f Dockerfile.fosdem -t ${{ env.REPO }} .
+    -
+      name: Test
+      run: |
+        docker run --rm --network=host --detach -e EM_PORT=5000 -e EM_SGX=false gianlu33/reactive-event-manager:fosdem
+        docker run --rm --network=host --detach -e EM_PORT=6000 -e EM_SGX=false gianlu33/reactive-event-manager:fosdem
+        git clone https://github.com/gianlu33/authentic-execution.git
+        shopt -s expand_aliases
+        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/authentic-execution:/usr/src/app/ ${{ env.REPO }} reactive-tools"
+        REACTIVE_TOOLS --verbose deploy --workspace demo native.json --result ../res.json
+        REACTIVE_TOOLS --verbose output --config res.json --connection init-server --arg beef
+        [ $(curl localhost:48879) -eq 0 ]
+        REACTIVE_TOOLS --verbose output --config res.json --connection trigger-btn
+        [ $(curl localhost:48879) -eq 1 ]
+        REACTIVE_TOOLS --verbose output --config res.json --connection trigger-btn
+        [ $(curl localhost:48879) -eq 2 ]
+    -
+      name: Push
+      run: |
+        docker push ${{ env.REPO }}
+        docker logout

@@ -9,6 +9,7 @@ from reactivenet import *
 
 from .base import Node
 from .. import tools
+from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
 
@@ -162,24 +163,12 @@ class SancusNode(Node):
                                 self.ip_address,
                                 self.reactive_port)
 
-        res = await self._send_reactive_command(
+        await self._send_reactive_command(
                 command,
                 log='Setting key of {}:{} on {} to {}'.format(
                      module.name, conn_io.name, self.name,
                      binascii.hexlify(key).decode('ascii'))
                 )
-
-        # The result format is [tag] where the tag includes the nonce and result code
-        res_code = res.message.payload[:2]
-        res_code_enum = SetKeyResultCode(tools.unpack_int16(res_code))
-        if res_code_enum != SetKeyResultCode.Ok:
-            raise Error("Received result code {}".format(str(res_code_enum)))
-
-        set_key_tag = res.message.payload[2:]
-        expected_tag = await encryption.SPONGENT.mac(module_key, nonce + res_code)
-
-        if set_key_tag != expected_tag:
-            raise Error('Module response has wrong tag')
 
 
     async def connect(self, to_module, conn_id):
