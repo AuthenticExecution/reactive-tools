@@ -55,7 +55,7 @@ class Encryption(IntEnum):
             return await encrypt_spongent(key, ad)
 
 
-async def encrypt_aes(key, ad, data=[]):
+async def encrypt_aes(key, ad, data=b''):
     # Note: we set nonce to zero because our nonce is part of the associated data
     aes_gcm = AES.new(key, AES.MODE_GCM, nonce=b'\x00'*12)
     aes_gcm.update(ad)
@@ -64,7 +64,7 @@ async def encrypt_aes(key, ad, data=[]):
     return cipher + tag
 
 
-async def decrypt_aes(key, ad, data=[]):
+async def decrypt_aes(key, ad, data=b''):
     try:
         aes_gcm = AES.new(key, AES.MODE_GCM, nonce=b'\x00'*12)
         aes_gcm.update(ad)
