@@ -22,7 +22,7 @@
             "node": "node_trustzone",
             "id": 2,
             "uuid": 236690545488471714192740514222985465104,
-            "key": "F4E1E51B223163574FE9F440B22C3711",
+            "key": "32b572aa89fd9b645b0439f8d5191750",
             "inputs": {"toggle_led":1}
         },
         {
