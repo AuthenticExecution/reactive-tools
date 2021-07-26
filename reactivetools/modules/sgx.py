@@ -325,7 +325,7 @@ class SGXModule(Module):
         await tools.run_async(*cmd)
 
         binary = os.path.join(self.output, "target", SGX_TARGET,
-                        glob.get_build_mode().to_str(), self.folder)
+                        glob.get_build_mode().to_str(), self.name)
 
         logging.info("Built module {}".format(self.name))
 

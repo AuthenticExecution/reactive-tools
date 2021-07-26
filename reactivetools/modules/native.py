@@ -260,7 +260,7 @@ class NativeModule(Module):
         await tools.run_async(*cmd)
 
         binary = os.path.join(self.output,
-                        "target", glob.get_build_mode().to_str(), self.folder)
+                        "target", glob.get_build_mode().to_str(), self.name)
 
         logging.info("Built module {}".format(self.name))
         return binary
