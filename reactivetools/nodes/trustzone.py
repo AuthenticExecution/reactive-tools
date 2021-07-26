@@ -4,6 +4,7 @@ import binascii
 import aiofile
 import ipaddress
 import struct
+from Crypto.Cipher import AES
 
 from reactivenet import *
 
@@ -95,7 +96,6 @@ class TrustZoneNode(Node):
         # The result format is [tag] where the tag is the challenge's MAC
         challenge_response = res.message.payload
         expected_tag = await Encryption.AES.mac(module.key, challenge)
-
         if challenge_response != expected_tag:
             raise Error('Attestation of {} failed'.format(module.name))
 

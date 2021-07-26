@@ -22,7 +22,7 @@
             "node": "node_trustzone",
             "id": 2,
             "uuid": 236690545488471714192740514222985465104,
-            "key": "64F8D1B1BC54412690063FAC74BA1619",
+            "key": "F4E1E51B223163574FE9F440B22C3711",
             "inputs": {"toggle_led":1}
         },
         {
@@ -38,7 +38,7 @@
             "from_output": "button_pressed",
             "to_module": "led_driver",
             "to_input": "toggle_led",
-            "encryption": "spongent"
+            "encryption": "aes"
         }
     ]
 
