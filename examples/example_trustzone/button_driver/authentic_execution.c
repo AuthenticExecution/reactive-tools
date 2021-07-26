@@ -141,7 +141,7 @@ static TEE_Result ta2tee_mode_id(uint32_t param, uint32_t *mode)
 
 static TEE_Result alloc_resources(void *session, uint32_t algo, uint32_t key_size,
                                     uint32_t mode){
-	
+
 	struct aes_cipher *sess;
 	TEE_Attribute attr;
 	TEE_Result res;
@@ -234,7 +234,7 @@ static TEE_Result set_aes_key(void *session, char *key, uint32_t key_sz){
 	/* Get ciphering context from session ID */
 	DMSG("Session %p: load key material", session);
 	sess = (struct aes_cipher *)session;
-	
+
 	//---------------------------------------------------------------
 	if (key_sz != sess->key_size) {
 		EMSG("Wrong key size %" PRIu32 ", expect %" PRIu32 " bytes",
@@ -261,9 +261,9 @@ static TEE_Result set_aes_key(void *session, char *key, uint32_t key_sz){
 	return res;
 }
 
-static TEE_Result reset_aes_iv(void *session, char *aad, size_t aad_sz, 
-                     char *nonce, size_t nonce_sz){
-	
+static TEE_Result reset_aes_iv(void *session, char *aad, size_t aad_sz,
+                     char *nonce, size_t nonce_sz, size_t payload_sz){
+
 	struct aes_cipher *sess;
 
 	/* Get ciphering context from session ID */
@@ -271,7 +271,7 @@ static TEE_Result reset_aes_iv(void *session, char *aad, size_t aad_sz,
 	sess = (struct aes_cipher *)session;
 
 	TEE_AEInit(sess->op_handle, nonce, nonce_sz, 16*8/* tag_len in bits */, aad_sz /*aad_len*/,
-						16 /*plaintext_len*/);
+						payload_sz /*plaintext_len*/);
 
 	TEE_AEUpdateAAD(sess->op_handle, aad, aad_sz);
 
@@ -288,7 +288,7 @@ static TEE_Result set_key(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_NONE);
 	struct aes_cipher *sess;
     Connection connection;
-   
+
 	DMSG("Session %p: cipher buffer", session);
 	sess = (struct aes_cipher *)session;
     char nonce[12] = { 0 };
@@ -296,12 +296,12 @@ static TEE_Result set_key(void *session, uint32_t param_types,
 
     alloc_resources(sess, TA_AES_ALGO_GCM, 16, TA_AES_MODE_DECODE);
     set_aes_key(sess, module_key, 16);
-    reset_aes_iv(sess, params[0].memref.buffer, params[0].memref.size, nonce, nonce_sz);
+    reset_aes_iv(sess, params[0].memref.buffer, params[0].memref.size, nonce, nonce_sz, params[1].memref.size);
 
     char *tag;
     tag = params[0].memref.buffer;
     char *temp;
-   
+
     void *decrypted_key = NULL;
     void *tag_void = NULL;
 
@@ -325,7 +325,7 @@ static TEE_Result set_key(void *session, uint32_t param_types,
 
 	  connection.nonce = 0;
 	  connection.encryption = tag[0] & 0xFF;
-	  
+
 	  int j = 0;
       connection.conn_id = 0;
       for(int n=2; n>=1; --n){
@@ -343,7 +343,7 @@ static TEE_Result set_key(void *session, uint32_t param_types,
     }
 
 out:
-	TEE_Free(decrypted_key); 
+	TEE_Free(decrypted_key);
     TEE_Free(tag_void);
 
 	return res;
@@ -360,7 +360,7 @@ static TEE_Result attest(void *session, uint32_t param_types,
 				TEE_PARAM_TYPE_NONE,
 				TEE_PARAM_TYPE_NONE);
 	struct aes_cipher *sess;
-   
+
 	DMSG("Session %p: cipher buffer", session);
 	sess = (struct aes_cipher *)session;
 
@@ -395,35 +395,33 @@ static TEE_Result attest(void *session, uint32_t param_types,
 	//*******************************************************************************
     char nonce[12] = { 0 };
     size_t nonce_sz = 12;
-	// challenge =  param[0] --> aad 
+	// challenge =  param[0] --> aad
     alloc_resources(sess, TA_AES_ALGO_GCM, 16, TA_AES_MODE_ENCODE);
     set_aes_key(sess, module_key, 16);
-    reset_aes_iv(sess, params[0].memref.buffer, params[0].memref.size, nonce, nonce_sz);
+    reset_aes_iv(sess, params[0].memref.buffer, params[0].memref.size, nonce, nonce_sz, 0);
 
 	unsigned char challenge[16]={0};
 	memcpy(challenge, params[0].memref.buffer, 16);
-	
-	const void *text = NULL;
-	void *encrypted_text = NULL;
-    void *tag = NULL;
-	
-    text = TEE_Malloc(16, 0);
-	encrypted_text = TEE_Malloc(16, 0);
-    tag = TEE_Malloc(16, 0);	
-	
-	res = TEE_AEEncryptFinal(sess->op_handle, text,
-				 16, encrypted_text, &params[0].memref.size, tag,
-				 &params[0].memref.size);
-	
+  DMSG("Module key: %x %x", module_key[0], module_key[1]);
+  DMSG("Challenge: %x %x", challenge[0], challenge[1]);
+
+  void *tag = TEE_Malloc(16, 0);
+  uint32_t len = 0, tag_len = 16;
+
+	res = TEE_AEEncryptFinal(sess->op_handle, NULL,
+				 0, NULL, &len, tag, &tag_len);
+
 	if (!res) {
 		params[1].memref.size = 16;
 		TEE_MemMove(params[1].memref.buffer, tag, params[1].memref.size);
-    }
-	TEE_Free(encrypted_text);
-	TEE_Free(text);
+  }
+  else {
+    DMSG("MAC generation failed: %d", res);
+  }
+
 	TEE_Free(tag);
-	
-	return TEE_SUCCESS;
+
+	return res;
 
 }
 
@@ -445,7 +443,7 @@ void handle_output(void *session, uint16_t output_id, uint32_t param_types,
 	void *conn_id_buf;
 	void *encrypt_buf;
 	void *tag_buf;
-	
+
 	int arr[total_node];
 	find_connections(output_id, arr, &num);
 	params[0].value.a = num;
@@ -476,10 +474,10 @@ void handle_output(void *session, uint16_t output_id, uint32_t param_types,
 
 		//*************** ^ ^ *******************************************************
 
-		if(connection->encryption == AES){ 
+		if(connection->encryption == AES){
     		alloc_resources(sess, TA_AES_ALGO_GCM, 16, TA_AES_MODE_ENCODE);
     		set_aes_key(sess, connection->connection_key, 16); //#######
-    		reset_aes_iv(sess, aad, 2, nonce, nonce_sz);
+    		reset_aes_iv(sess, aad, 2, nonce, nonce_sz, data_len);
 
 			void *encrypt = NULL;
 			void *tag = NULL;
@@ -487,18 +485,18 @@ void handle_output(void *session, uint16_t output_id, uint32_t param_types,
 
 			encrypt = TEE_Malloc(data_len, 0);
 			tag = TEE_Malloc(16, 0);
-    
+
     		const void *text = NULL;
 			text = TEE_Malloc(data_len, 0);
 			memcpy(text, params[2].memref.buffer, data_len);
 
-			TEE_Result res = TEE_AEEncryptFinal(sess->op_handle, text, data_len, 
+			TEE_Result res = TEE_AEEncryptFinal(sess->op_handle, text, data_len,
 					encrypt, &data_len, tag, &sz);
-	
+
 			if (!res) {
 				memcpy(encrypt_buf + (data_len * i), encrypt, data_len);
 				memcpy(tag_buf + (16*i), tag, 16);
-				TEE_Free(encrypt); 
+				TEE_Free(encrypt);
     			TEE_Free(tag);
 				TEE_Free(text);
 			}
@@ -519,14 +517,14 @@ void handle_output(void *session, uint16_t output_id, uint32_t param_types,
 		connection->nonce = connection->nonce + 1; //######
 
     } // for
-	
+
 	params[1].memref.size = 2*num;
 	TEE_MemMove(params[1].memref.buffer, conn_id_buf, params[1].memref.size);
 	params[2].memref.size = data_len * num;
 	TEE_MemMove(params[2].memref.buffer, encrypt_buf, params[2].memref.size);
 	params[3].memref.size = 16*num;
 	TEE_MemMove(params[3].memref.buffer, tag_buf, params[3].memref.size);
-	
+
 	TEE_Free(conn_id_buf);
 	TEE_Free(encrypt_buf);
 	TEE_Free(tag_buf);
@@ -559,11 +557,11 @@ TEE_Result handle_input(void *session, uint32_t param_types, TEE_Param params[4]
     }
 
 	//---------------------------------------------------------------
-	if(connection->encryption == AES){ 
+	if(connection->encryption == AES){
 		alloc_resources(sess, TA_AES_ALGO_GCM, 16, TA_AES_MODE_DECODE);
     	set_aes_key(sess, connection->connection_key, 16); //#######
-    	reset_aes_iv(sess, aad, 2, nonce, nonce_sz);
-	
+    	reset_aes_iv(sess, aad, 2, nonce, nonce_sz, params[1].memref.size);
+
     	void *decrypted_data = NULL;
     	void *tag_void = NULL;
 
@@ -589,7 +587,7 @@ TEE_Result handle_input(void *session, uint32_t param_types, TEE_Param params[4]
 
 		BitSequence tag_spongent[16]; 	// TAG length is the same as the key length. 16 bytes.
 		BitSequence encrypted_data[params[1].memref.size];
-		
+
 		for (int n = 0; n < params[1].memref.size; n++){
 			encrypted_data[n] = ((uint8_t *)params[1].memref.buffer)[n];
 		}
@@ -598,19 +596,19 @@ TEE_Result handle_input(void *session, uint32_t param_types, TEE_Param params[4]
 			tag_spongent[n] = ((uint8_t *)params[2].memref.buffer)[n];
 		}
 
-		SpongentUnwrap(connection->connection_key, aad, 16, encrypted_data, 
+		SpongentUnwrap(connection->connection_key, aad, 16, encrypted_data,
 										(params[1].memref.size) * 8, data, tag_spongent);
-		
+
 		for(int i = 0; i < params[1].memref.size; i++){
 			printf("%2X", data[i]);
 	  	}
 
 	}
-	
+
 	connection->nonce = connection->nonce + 1;
-	
+
 	find_input_func(connection->io_id, data);
-	
+
 	return TEE_SUCCESS;
 }
 
@@ -625,7 +623,7 @@ void TA_DestroyEntryPoint(void) {
    DMSG("=============== TA_DestroyEntryPoint ===============");
 }
 
-// open session  
+// open session
 TEE_Result TA_OpenSessionEntryPoint(uint32_t __unused param_types,
 					TEE_Param __unused params[4],
 					void __unused **session)

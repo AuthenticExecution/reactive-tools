@@ -97,6 +97,10 @@ class TrustZoneNode(Node):
         challenge_response = res.message.payload
         expected_tag = await Encryption.AES.mac(module.key, challenge)
         if challenge_response != expected_tag:
+            logging.debug("Key: {}".format(module.key))
+            logging.debug("Challenge: {}".format(challenge))
+            logging.debug("Resp: {}".format(challenge_response))
+            logging.debug("Expected: {}".format(expected_tag))
             raise Error('Attestation of {} failed'.format(module.name))
 
         logging.info("Attestation of {} succeeded".format(module.name))
