@@ -59,7 +59,6 @@ async def encrypt_aes(key, ad, data=b''):
     # Note: we set nonce to zero because our nonce is part of the associated data
     aes_gcm = AES.new(key, AES.MODE_GCM, nonce=b'\x00'*12)
     aes_gcm.update(ad)
-
     cipher, tag = aes_gcm.encrypt_and_digest(data)
     return cipher + tag
 

@@ -148,8 +148,7 @@ class Config:
 
         if any(map(
             lambda x : (x.from_module and not x.from_module.attested) or
-            not x.to_module.attested,
-        to_connect)):
+            not x.to_module.attested, to_connect)):
             raise Error("One or more modules to connect are not attested yet")
 
         logging.info("To connect: {}".format([x.name for x in to_connect]))
