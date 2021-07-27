@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="reactive-tools",
-    version="0.2.1",
+    version="0.3.0",
     author="Gianluca Scopelliti",
     author_email="gianlu.1033@gmail.com",
     description="Deployment tools for the Authentic Execution framework",
@@ -24,7 +24,7 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: OS Independent",
+        "Operating System :: POSIX :: Linux",
     ],
     python_requires='>=3.6',
     include_package_data=True,
