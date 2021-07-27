@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import binascii
+import hashlib
 
 from .base import Module
 from ..nodes import TrustZoneNode
@@ -26,7 +27,6 @@ class TrustZoneModule(Module):
         self.files_dir = files_dir
         self.id = id
         self.uuid = uuid
-        self.key =  key
         self.inputs =  inputs
         self.outputs =  outputs
         self.entrypoints =  entrypoints
@@ -34,6 +34,7 @@ class TrustZoneModule(Module):
         self.uuid_for_MK = ""
 
         self.__build_fut = tools.init_future(binary)
+        self.__key_fut = tools.init_future(key)
         self.__attest_fut = tools.init_future(attested if attested else None)
 
 
@@ -70,7 +71,7 @@ class TrustZoneModule(Module):
             "binary": dump(self.binary) if self.deployed else None,
             "id": self.id,
             "uuid": self.uuid,
-            "key": dump(self.key),
+            "key": dump(self.key) if self.deployed else None,
             "inputs":self.inputs,
             "outputs":self.outputs,
             "entrypoints":self.entrypoints
@@ -81,6 +82,15 @@ class TrustZoneModule(Module):
     @property
     async def binary(self):
         return await self.build()
+
+
+    @property
+    async def key(self):
+        if self.__key_fut is None:
+            self.__key_fut = asyncio.ensure_future(self.__calculate_key())
+
+        return await self.__key_fut
+
 
     # --- Implement abstract methods --- #
 
@@ -143,7 +153,7 @@ class TrustZoneModule(Module):
 
 
     async def get_key(self):
-        return self.key
+        return await self.key
 
 
     @staticmethod
@@ -169,3 +179,14 @@ class TrustZoneModule(Module):
         binary = "{}/{}/{}.ta".format(glob.BUILD_DIR, self.name, self.uuid_for_MK)
 
         return binary
+
+
+    async def __calculate_key(self):
+        binary = await self.binary
+        node_key = self.node.node_key
+
+        with open(binary, 'rb') as f:
+            # first 20 bytes are the header (struct shdr), next 32 bytes are the hash
+            module_hash = f.read(52)[20:]
+
+        return hashlib.md5(node_key + module_hash).digest()

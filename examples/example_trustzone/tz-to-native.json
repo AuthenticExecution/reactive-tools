@@ -4,8 +4,8 @@
             "type": "trustzone",
             "name": "node_trustzone",
             "ip_address": "127.0.0.1",
-            "reactive_port": 1236
-
+            "reactive_port": 1236,
+            "node_key": "9a04aa182d039674708ce807ed914cd153cd9df7805e61742f0ae41294758dd3"
         },
         {
             "type": "native",
@@ -22,7 +22,6 @@
             "node": "node_trustzone",
             "id": 1,
             "uuid": 281445940253181251961359712745212326917,
-            "key": "4102830545b1c380abdc9e47071fe75c",
             "outputs": {"button_pressed":0},
             "entrypoints": {"entry":3 }
         },

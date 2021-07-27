@@ -19,8 +19,10 @@ class Error(Exception):
     pass
 
 class TrustZoneNode(Node):
-    def __init__(self, name, ip_address, reactive_port, deploy_port):
+    def __init__(self, name, ip_address, reactive_port, deploy_port, node_key):
         super().__init__(name, ip_address, reactive_port, deploy_port, need_lock=False)
+
+        self.node_key = node_key
 
 
     @staticmethod
@@ -29,8 +31,9 @@ class TrustZoneNode(Node):
         ip_address = ipaddress.ip_address(node_dict['ip_address'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
+        node_key = parse_key(node_dict['node_key'])
 
-        return TrustZoneNode(name, ip_address, reactive_port, deploy_port)
+        return TrustZoneNode(name, ip_address, reactive_port, deploy_port, node_key)
 
 
     def dump(self):
@@ -40,7 +43,7 @@ class TrustZoneNode(Node):
             "ip_address": str(self.ip_address),
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
-
+            "node_key": dump(self.node_key)
         }
 
 
@@ -95,9 +98,9 @@ class TrustZoneNode(Node):
 
         # The result format is [tag] where the tag is the challenge's MAC
         challenge_response = res.message.payload
-        expected_tag = await Encryption.AES.mac(module.key, challenge)
+        expected_tag = await Encryption.AES.mac(await module.key, challenge)
         if challenge_response != expected_tag:
-            logging.debug("Key: {}".format(module.key))
+            logging.debug("Key: {}".format(await module.key))
             logging.debug("Challenge: {}".format(challenge))
             logging.debug("Resp: {}".format(challenge_response))
             logging.debug("Expected: {}".format(expected_tag))
