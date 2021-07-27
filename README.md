@@ -9,6 +9,7 @@ Currently, the following architectures are supported:
 - Sancus
 - SGX
 - Native (no TEE support, run natively)
+- TrustZone with OPTEE
 
 [Extending support for new architectures](add_new_architectures.md)
 
@@ -17,6 +18,7 @@ Currently, the following architectures are supported:
 ### Limitations
 
 - Currently, SGX modules can only be deployed in debug mode
+- Trustzone support is experimental, it works on QEMU v7 only, on our custom [optee_os](https://github.com/gianlu33/optee_os/tree/authentic-execution) and [event manager](https://github.com/sepidehpouyan/Authentic-Execution/tree/master/Event) (which should run on the normal world)
 
 ## Dependencies & installation
 
@@ -29,19 +31,16 @@ pip install .
 
 ## Run reactive-tools with Docker
 
-The [gianlu33/reactive-tools](https://hub.docker.com/repository/docker/gianlu33/reactive-tools) Docker images provide a simple and fast way to run reactive-tools from any Linux OS. We provide different tags, according to the developer needs:
+The [gianlu33/reactive-tools](https://hub.docker.com/repository/docker/gianlu33/reactive-tools) Docker images provide a simple and fast way to run reactive-tools from any Linux-based OS.
 
-- `latest` contains all the dependencies for all the architectures supported
-- `sgx` contains the dependencies to deploy only SGX and native modules
-- `native` contains dependencies to deploy only native modules
-- `sancus` contains dependencies to deploy only Sancus modules
+- the `latest` image contains all the dependencies/toolchains to build and deploy modules (sgx, native, sancus, trustzone), plus some other utilities. It is *not* optimized, therefore it is not really lightweight but it contains everything is needed.
 
 When running the Docker image, ideally you should mount a volume that includes the workspace of the application to be deployed, containing all the source files and the deployment descriptor.
 
 ```bash
 # run reactive-tools image
 ### <volume>: volume we want to mount (ideally, contains the workspace of our app)
-### <tag>: tag of the image we want to run between {latest,sgx,sancus,native}
+### <tag>: tag of the image we want to run (default: latest)
 make run VOLUME=<volume> TAG=<tag>
 ```
 
@@ -74,7 +73,7 @@ reactive-tools deploy --workspace <workspace> <config> --result <result>
 ### <module_name>: name of the module we want to call
 ### <entry_point>: either the name or the ID of th entry point we want to call
 ### <arg>: byte array in hexadecimal format, e.g., "deadbeef" (OPTIONAL)
-reactive-tools call --config <config> --module <module_name> --entry <entry_point> --arg <arg>
+reactive-tools call <config> --module <module_name> --entry <entry_point> --arg <arg>
 ```
 
 ### Output
@@ -83,7 +82,7 @@ reactive-tools call --config <config> --module <module_name> --entry <entry_poin
 ### <config>: deployment descriptor. MUST be the output of a previous deploy command
 ### <connection>: either the name or the ID of the connection
 ### <arg>: byte array in hexadecimal format, e.g., "deadbeef" (OPTIONAL)
-reactive-tools output --config <config> --connection <connection> --arg <arg>
+reactive-tools output <config> --connection <connection> --arg <arg>
 ```
 
 ### Request
@@ -92,5 +91,5 @@ reactive-tools output --config <config> --connection <connection> --arg <arg>
 ### <config>: deployment descriptor. MUST be the output of a previous deploy command
 ### <connection>: either the name or the ID of the connection
 ### <arg>: byte array in hexadecimal format, e.g., "deadbeef" (OPTIONAL)
-reactive-tools request --config <config> --connection <connection> --arg <arg>
+reactive-tools request <config> --connection <connection> --arg <arg>
 ```
