@@ -189,4 +189,8 @@ class TrustZoneModule(Module):
             # first 20 bytes are the header (struct shdr), next 32 bytes are the hash
             module_hash = f.read(52)[20:]
 
-        return hashlib.md5(node_key + module_hash).digest()
+        key_size = Encryption.AES.get_key_size()
+        if key_size > 32:
+            raise Error("SHA256 cannot compute digests with length {}".format(key_size))
+
+        return hashlib.sha256(node_key + module_hash).digest()[:key_size]
