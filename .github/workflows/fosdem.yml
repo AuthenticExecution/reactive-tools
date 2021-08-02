@@ -29,10 +29,13 @@ jobs:
         alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/authentic-execution:/usr/src/app/ ${{ env.REPO }} reactive-tools"
         REACTIVE_TOOLS --verbose deploy --workspace demo native.json --result ../res.json
         REACTIVE_TOOLS --verbose output --config res.json --connection init-server --arg beef
+        sleep 2
         [ $(curl localhost:48879) -eq 0 ]
         REACTIVE_TOOLS --verbose output --config res.json --connection trigger-btn
+        sleep 2
         [ $(curl localhost:48879) -eq 1 ]
         REACTIVE_TOOLS --verbose output --config res.json --connection trigger-btn
+        sleep 2
         [ $(curl localhost:48879) -eq 2 ]
     -
       name: Push

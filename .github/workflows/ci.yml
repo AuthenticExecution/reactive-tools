@@ -40,10 +40,13 @@ jobs:
         REACTIVE_TOOLS --verbose attest res.json
         REACTIVE_TOOLS --verbose connect res.json
         REACTIVE_TOOLS --verbose output res.json --connection init-server --arg beef
+        sleep 2
         [ $(curl localhost:48879) -eq 0 ]
         REACTIVE_TOOLS --verbose output res.json --connection trigger-btn
+        sleep 2
         [ $(curl localhost:48879) -eq 1 ]
         REACTIVE_TOOLS --verbose output res.json --connection trigger-btn
+        sleep 2
         [ $(curl localhost:48879) -eq 2 ]
     -
       name: Push
