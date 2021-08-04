@@ -23,36 +23,36 @@
             "type": "sgx",
             "name": "webserver",
             "node": "node1",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sgx",
             "name": "db",
             "node": "node1",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sgx",
             "name": "controller",
             "node": "node1",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sgx",
             "name": "button_driver",
             "node": "node2",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sgx",
             "name": "led_driver",
             "node": "node2",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         }
     ],
     "connections": [

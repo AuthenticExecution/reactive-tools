@@ -25,22 +25,22 @@
             "type": "sgx",
             "name": "webserver",
             "node": "node_sgx",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sgx",
             "name": "db",
             "node": "node_sgx",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sgx",
             "name": "controller",
             "node": "node_sgx",
-            "vendor_key": "../vendor/private_key.pem",
-            "ra_settings": "../vendor/settings.json"
+            "vendor_key": "<Insert path to your private key here>",
+            "ra_settings": "<Insert path to your settings JSON file here>"
         },
         {
             "type": "sancus",
