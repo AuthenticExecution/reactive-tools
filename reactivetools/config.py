@@ -202,6 +202,8 @@ def load(file_name, output_type=None):
     #   - the same type of the input file otherwise
     config.output_type = desc_type or input_type
 
+    config.manager = _load_manager(contents['manager'], config)
+
     config.nodes = load_list(contents['nodes'],
                                 lambda n: _load_node(n, config))
     config.modules = load_list(contents['modules'],
@@ -221,8 +223,6 @@ def load(file_name, output_type=None):
                                         lambda e: _load_periodic_event(e, config))
     else:
         config.periodic_events = []
-
-    config.manager = _load_manager(contents['manager'], config)
 
     return config
 
@@ -249,6 +249,8 @@ def _load_module(mod_dict, config):
         raise Error("Node {} ({}) does not support module {} ({})".format(
             node.name, node.__class__.__name__,
             module.name, module.__class__.__name__))
+
+    module.manager = config.manager
 
     return module
 

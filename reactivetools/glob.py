@@ -2,6 +2,7 @@ from enum import IntEnum
 import os
 
 BUILD_DIR = os.path.join(os.getcwd(), "build")
+ATTMAN_CLI = "attman-cli"
 
 class Error(Exception):
     pass
@@ -31,6 +32,7 @@ class BuildMode(IntEnum):
 
 
 __BUILD_MODE = BuildMode.DEBUG
+__ATTESTATION_MANAGER = False
 
 def set_build_mode(mode):
     global __BUILD_MODE
@@ -38,3 +40,10 @@ def set_build_mode(mode):
 
 def get_build_mode():
     return __BUILD_MODE
+
+def set_att_man(att_man):
+    global __ATTESTATION_MANAGER
+    __ATTESTATION_MANAGER = att_man
+
+def get_att_man():
+    return __ATTESTATION_MANAGER
