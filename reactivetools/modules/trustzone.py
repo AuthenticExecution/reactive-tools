@@ -2,6 +2,7 @@ import logging
 import asyncio
 import binascii
 import hashlib
+import json
 
 from .base import Module
 from ..nodes import TrustZoneNode
@@ -106,10 +107,13 @@ class TrustZoneModule(Module):
 
 
     async def attest(self):
-        if self.__attest_fut is None:
-            self.__attest_fut = asyncio.ensure_future(self.node.attest(self))
+        if glob.get_att_man():
+            await self.__attest_manager()
+        else:
+            if self.__attest_fut is None:
+                self.__attest_fut = asyncio.ensure_future(self.node.attest(self))
 
-        return await self.__attest_fut
+            await self.__attest_fut
 
 
     async def get_id(self):
@@ -194,3 +198,29 @@ class TrustZoneModule(Module):
             raise Error("SHA256 cannot compute digests with length {}".format(key_size))
 
         return hashlib.sha256(node_key + module_hash).digest()[:key_size]
+
+
+    async def __attest_manager(self):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "host": str(self.node.ip_address),
+            "port": self.node.reactive_port,
+            "em_port": self.node.reactive_port,
+            "key": list(await self.key)
+        }
+        data_file = tools.create_tmp(suffix=".json")
+        with open(data_file, "w") as f:
+            json.dump(data, f)
+
+        args = "--config {} --request attest-trustzone --data {}".format(
+                    self.manager.config, data_file).split()
+        out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
+        key_arr = eval(out) # from string to array
+        key = bytes(key_arr) # from array to bytes
+
+        if await self.key != key:
+            raise Error("Received key is different from {} key".format(self.name))
+
+        logging.info("Done Remote Attestation of {}. Key: {}".format(self.name, key_arr))
+        self.attested = True

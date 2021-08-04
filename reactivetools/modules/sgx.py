@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import aiofile
+import json
 
 from .base import Module
 
@@ -175,10 +176,13 @@ class SGXModule(Module):
 
 
     async def attest(self):
-        if self.__attest_fut is None:
-            self.__attest_fut = asyncio.ensure_future(self.__attest())
+        if glob.get_att_man():
+            await self.__attest_manager()
+        else:
+            if self.__attest_fut is None:
+                self.__attest_fut = asyncio.ensure_future(self.__attest())
 
-        await self.__attest_fut
+            await self.__attest_fut
 
 
     async def get_id(self):
@@ -306,7 +310,7 @@ class SGXModule(Module):
         args.moduleid = self.id
         args.emport = self.node.deploy_port
         args.runner = rustsgxgen.Runner.SGX
-        args.spkey = await self.get_ra_sp_pub_key()
+        args.spkey = await self.manager.get_sp_pubkey() if glob.get_att_man() else await self.get_ra_sp_pub_key()
         args.print = None
 
         data, _ = rustsgxgen.generate(args)
@@ -361,6 +365,33 @@ class SGXModule(Module):
         env["AESM_PORT"] = str(self.node.aesm_port)
 
         out, _ = await tools.run_async_output(ATTESTER, env=env)
+        key_arr = eval(out) # from string to array
+        key = bytes(key_arr) # from array to bytes
+
+        logging.info("Done Remote Attestation of {}. Key: {}".format(self.name, key_arr))
+        self.key = key
+        self.attested = True
+
+
+    async def __attest_manager(self):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "host": str(self.node.ip_address),
+            "port": self.port,
+            "em_port": self.node.reactive_port,
+            "aesm_client_port": self.node.aesm_port,
+            "sigstruct": await self.sig
+        }
+        data_file = tools.create_tmp(suffix=".json")
+        with open(data_file, "w") as f:
+            json.dump(data, f)
+
+        # TODO include also settings?
+
+        args = "--config {} --request attest-sgx --data {}".format(
+                    self.manager.config, data_file).split()
+        out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out) # from string to array
         key = bytes(key_arr) # from array to bytes
 
