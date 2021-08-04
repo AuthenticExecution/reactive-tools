@@ -37,7 +37,7 @@ def _parse_args(args):
         '--debug',
         help='Debug output',
         action='store_true')
-    attest_parser.add_argument(
+    parser.add_argument(
         '--manager',
         help='Offload the task to the Attestation Manager, if possible',
         action='store_true')
@@ -362,7 +362,7 @@ def _handle_request(args):
 def main(raw_args=None):
     args = _parse_args(raw_args)
     _setup_logging(args)
-    glob.set_att_man(args.manager)    
+    glob.set_att_man(args.manager)
 
     # create working directory
     try:
