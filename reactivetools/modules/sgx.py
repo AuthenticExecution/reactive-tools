@@ -381,7 +381,8 @@ class SGXModule(Module):
             "port": self.port,
             "em_port": self.node.reactive_port,
             "aesm_client_port": self.node.aesm_port,
-            "sigstruct": await self.sig
+            "sigstruct": await self.sig,
+            "config": self.ra_settings
         }
         data_file = tools.create_tmp(suffix=".json")
         with open(data_file, "w") as f:
