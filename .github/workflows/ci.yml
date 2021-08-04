@@ -33,10 +33,9 @@ jobs:
       run: |
         docker run --rm --network=host --detach -e EM_PORT=5000 -e EM_SGX=false --name em-5000 gianlu33/reactive-event-manager:latest
         docker run --rm --network=host --detach -e EM_PORT=6000 -e EM_SGX=false --name em-6000 gianlu33/reactive-event-manager:latest
-        git clone https://github.com/gianlu33/authentic-execution.git
         shopt -s expand_aliases
-        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/authentic-execution:/usr/src/app/ ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
-        REACTIVE_TOOLS --verbose deploy --workspace demo native.json --result ../res.json
+        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/examples/fosdem-21:/usr/src/app/ ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
+        REACTIVE_TOOLS --verbose deploy native.json --result res.json
         REACTIVE_TOOLS --verbose attest res.json
         REACTIVE_TOOLS --verbose connect res.json
         REACTIVE_TOOLS --verbose output res.json --connection init-server --arg beef
@@ -55,10 +54,9 @@ jobs:
         docker run --rm --network=host --detach -e EM_PORT=5000 -e EM_SGX=false gianlu33/reactive-event-manager:latest
         docker run --rm --network=host --detach -e EM_PORT=6000 -e EM_SGX=false gianlu33/reactive-event-manager:latest
         docker run --rm --network=host --detach -e AM_PORT=1234 gianlu33/attestation-manager:native
-        git clone -b update-binaries https://github.com/gianlu33/authentic-execution.git
         shopt -s expand_aliases
-        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/authentic-execution:/usr/src/app/ ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
-        REACTIVE_TOOLS --verbose --manager deploy --workspace demo native.json --result ../res.json
+        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/examples/fosdem-21:/usr/src/app/ ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
+        REACTIVE_TOOLS --verbose --manager deploy native.json --result res.json
         REACTIVE_TOOLS --verbose --manager attest res.json
         REACTIVE_TOOLS --verbose --manager connect res.json
         REACTIVE_TOOLS --verbose --manager output res.json --connection init-server --arg beef
