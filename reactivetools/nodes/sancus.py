@@ -2,7 +2,6 @@ import asyncio
 import logging
 import binascii
 import aiofile
-import ipaddress
 from enum import IntEnum
 
 from reactivenet import *
@@ -38,7 +37,7 @@ class SancusNode(Node):
         name = node_dict['name']
         vendor_id = node_dict['vendor_id']
         vendor_key = parse_key(node_dict['vendor_key'])
-        ip_address = ipaddress.ip_address(node_dict['ip_address'])
+        ip_address = tools.resolve_ip(node_dict['ip_address'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
 
