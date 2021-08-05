@@ -3,7 +3,6 @@ import aiofile
 import logging
 from abc import ABC, abstractmethod
 import binascii
-import ipaddress
 
 from reactivenet import *
 
@@ -81,7 +80,7 @@ class SGXNode(SGXBase):
     @staticmethod
     def load(node_dict):
         name = node_dict['name']
-        ip_address = ipaddress.ip_address(node_dict['ip_address'])
+        ip_address = tools.resolve_ip(node_dict['ip_address'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
         module_id = node_dict.get('module_id')

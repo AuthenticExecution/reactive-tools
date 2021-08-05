@@ -5,6 +5,8 @@ import asyncio
 import base64
 import struct
 from enum import Enum
+import socket
+import ipaddress
 
 from . import glob
 
@@ -103,6 +105,25 @@ async def run_async_shell(*args, env=None):
 
     if result != 0:
         raise ProcessRunError(args, result)
+
+
+def resolve_ip(host):
+    # first, try to parse IP address
+    try:
+        return ipaddress.ip_address(host)
+    except:
+        pass
+
+    # if it is not an IP address, try to resolve hostname
+    try:
+        ip = socket.gethostbyname(host)
+        return ipaddress.ip_address(ip)
+    except:
+        pass
+
+    # Otherwise, raise exception
+    raise Error("Invalid host: {}".format(host))
+
 
 
 def create_tmp(suffix='', dir=''):

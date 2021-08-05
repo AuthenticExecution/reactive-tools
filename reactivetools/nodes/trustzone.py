@@ -2,9 +2,7 @@ import asyncio
 import logging
 import binascii
 import aiofile
-import ipaddress
 import struct
-from Crypto.Cipher import AES
 
 from reactivenet import *
 
@@ -28,7 +26,7 @@ class TrustZoneNode(Node):
     @staticmethod
     def load(node_dict):
         name = node_dict['name']
-        ip_address = ipaddress.ip_address(node_dict['ip_address'])
+        ip_address = tools.resolve_ip(node_dict['ip_address'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
         node_key = parse_key(node_dict['node_key'])
