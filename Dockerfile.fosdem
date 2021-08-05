@@ -1,4 +1,4 @@
-FROM gianlu33/reactive-base:latest
+FROM gianlu33/reactive-base:fosdem
 
 WORKDIR /usr/src/install
 

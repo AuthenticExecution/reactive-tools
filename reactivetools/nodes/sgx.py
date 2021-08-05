@@ -72,9 +72,11 @@ class SGXBase(Node):
 class SGXNode(SGXBase):
     type = "sgx"
 
-    def __init__(self, name, ip_address, reactive_port, deploy_port, module_id, aesm_port):
+    def __init__(self, name, ip_address, reactive_port, deploy_port, module_id,
+            aesm_host, aesm_port):
         super().__init__(name, ip_address, reactive_port, deploy_port, module_id)
 
+        self.aesm_host = aesm_host or ip_address
         self.aesm_port = aesm_port or 13741
 
     @staticmethod
@@ -84,10 +86,11 @@ class SGXNode(SGXBase):
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
         module_id = node_dict.get('module_id')
+        aesm_host = node_dict.get('aesm_host')
         aesm_port = node_dict.get('aesm_port')
 
         return SGXNode(name, ip_address, reactive_port, deploy_port,
-                    module_id, aesm_port)
+                    module_id, aesm_host, aesm_port)
 
 
     def dump(self):
@@ -98,6 +101,7 @@ class SGXNode(SGXBase):
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
             "module_id": self._moduleid,
+            "aesm_host": self.aesm_host,
             "aesm_port": self.aesm_port
         }
 

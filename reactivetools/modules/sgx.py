@@ -362,6 +362,7 @@ class SGXModule(Module):
         env["ENCLAVE_SIG"] = await self.sig
         env["ENCLAVE_HOST"] = str(self.node.ip_address)
         env["ENCLAVE_PORT"] = str(self.port)
+        env["AESM_HOST"] = str(self.node.aesm_host)
         env["AESM_PORT"] = str(self.node.aesm_port)
 
         out, _ = await tools.run_async_output(ATTESTER, env=env)
@@ -380,6 +381,7 @@ class SGXModule(Module):
             "host": str(self.node.ip_address),
             "port": self.port,
             "em_port": self.node.reactive_port,
+            "aesm_client_host": self.node.aesm_host,
             "aesm_client_port": self.node.aesm_port,
             "sigstruct": await self.sig,
             "config": self.ra_settings
@@ -387,8 +389,6 @@ class SGXModule(Module):
         data_file = tools.create_tmp(suffix=".json")
         with open(data_file, "w") as f:
             json.dump(data, f)
-
-        # TODO include also settings?
 
         args = "--config {} --request attest-sgx --data {}".format(
                     self.manager.config, data_file).split()
