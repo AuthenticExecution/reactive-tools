@@ -101,7 +101,7 @@ class SGXNode(SGXBase):
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
             "module_id": self._moduleid,
-            "aesm_host": self.aesm_host,
+            "aesm_host": str(self.aesm_host),
             "aesm_port": self.aesm_port
         }
 
