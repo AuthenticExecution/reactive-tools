@@ -266,7 +266,7 @@ def _load_periodic_event(events_dict, config):
 
 
 def _load_manager(man_file, config):
-    man_dict = DescriptorType.load_any(man_file)
+    man_dict, _ = DescriptorType.load_any(man_file)
     evaluate_rules(os.path.join("default", "manager.yaml"), man_dict)
     return Manager.load(man_file, man_dict, config)
 
