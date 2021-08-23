@@ -30,7 +30,7 @@ class DescriptorType(IntEnum):
     @staticmethod
     def load_any(file):
         if not os.path.exists(file):
-            raise Error("Input file does not exist")
+            raise Error("Input file {} does not exist".format(file))
 
         try:
             return DescriptorType.JSON.load(file), DescriptorType.JSON
@@ -38,7 +38,7 @@ class DescriptorType(IntEnum):
             try:
                 return DescriptorType.YAML.load(file), DescriptorType.YAML
             except:
-                raise Error("Input file is not a JSON, nor a YAML")
+                raise Error("Input file {} is not a JSON, nor a YAML".format(file))
 
 
     def load(self, file):

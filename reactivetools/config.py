@@ -202,7 +202,8 @@ def load(file_name, output_type=None):
     #   - the same type of the input file otherwise
     config.output_type = desc_type or input_type
 
-    config.manager = _load_manager(contents['manager'], config)
+    if 'manager' in contents:
+        config.manager = _load_manager(contents['manager'], config)
 
     config.nodes = load_list(contents['nodes'],
                                 lambda n: _load_node(n, config))
@@ -266,6 +267,9 @@ def _load_periodic_event(events_dict, config):
 
 
 def _load_manager(man_file, config):
+    if man_file is None:
+        return None
+
     man_dict, _ = DescriptorType.load_any(man_file)
     evaluate_rules(os.path.join("default", "manager.yaml"), man_dict)
     return Manager.load(man_file, man_dict, config)
@@ -298,7 +302,7 @@ def dump_config(config, file_name):
 def _(config):
     dump(config.nodes)
     return {
-            'manager': dump(config.manager),
+            'manager': dump(config.manager) if config.manager is not None else None,
             'nodes': dump(config.nodes),
             'modules': dump(config.modules),
             'connections_current_id': config.connections_current_id,
