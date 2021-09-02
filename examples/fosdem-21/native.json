@@ -4,7 +4,7 @@
         {
             "type": "native",
             "name": "node1",
-            "ip_address": "localhost",
+            "ip_address": "127.0.0.1",
             "reactive_port": 5000
         },
         {
