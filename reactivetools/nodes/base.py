@@ -186,7 +186,7 @@ class Node(ABC):
 
     ### Returns ###
     """
-    async def call(self, module, entry, arg=None):
+    async def call(self, module, entry, arg=None, output=None):
         assert module.node is self
 
         module_id, entry_id = \
@@ -209,9 +209,14 @@ class Node(ABC):
 
         if not response.ok():
             logging.error("Received error code {}".format(str(response.code)))
-        else:
+            return
+
+        if output is None:
             logging.info("Response: \"{}\"".format(
                 binascii.hexlify(response.message.payload).decode('ascii')))
+        else:
+            with open(output, "wb") as f:
+                f.write(plaintext)
 
 
     """
@@ -265,7 +270,7 @@ class Node(ABC):
 
     ### Returns ###
     """
-    async def request(self, connection, arg=None):
+    async def request(self, connection, arg=None, output=None):
         assert connection.to_module.node is self
 
         module_id = await connection.to_module.get_id()
@@ -301,8 +306,12 @@ class Node(ABC):
         plaintext = await connection.encryption.decrypt(connection.key,
                     tools.pack_int16(connection.nonce + 1), resp_encrypted)
 
-        logging.info("Response: \"{}\"".format(
-            binascii.hexlify(plaintext).decode('ascii')))
+        if output is None:
+            logging.info("Response: \"{}\"".format(
+                binascii.hexlify(plaintext).decode('ascii')))
+        else:
+            with open(output, "wb") as f:
+                f.write(plaintext)
 
 
 

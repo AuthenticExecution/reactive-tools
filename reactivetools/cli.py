@@ -182,6 +182,9 @@ def _parse_args(args):
         help='Argument to pass to the entry point (hex byte array)',
         type=binascii.unhexlify,
         default=None)
+    call_parser.add_argument(
+        '--out',
+        help='File to write the received result to')
 
     # output
     output_parser = subparsers.add_parser(
@@ -224,6 +227,9 @@ def _parse_args(args):
     request_parser.add_argument(
         '--result',
         help='File to write the resulting configuration to')
+    request_parser.add_argument(
+        '--out',
+        help='File to write the received result to')
 
     return parser.parse_args(args)
 
@@ -302,7 +308,7 @@ def _handle_call(args):
     module = conf.get_module(args.module)
 
     asyncio.get_event_loop().run_until_complete(
-                                            module.call(args.entry, args.arg))
+                                            module.call(args.entry, args.arg, args.out))
 
     conf.cleanup()
 
@@ -351,7 +357,7 @@ def _handle_request(args):
         raise Error("Not a request-handler connection")
 
     asyncio.get_event_loop().run_until_complete(
-                                    conn.to_module.node.request(conn, args.arg))
+                                    conn.to_module.node.request(conn, args.arg, args.out))
 
     conn.nonce += 2
     out_file = args.result or args.config
