@@ -308,7 +308,7 @@ def _handle_call(args):
     module = conf.get_module(args.module)
 
     asyncio.get_event_loop().run_until_complete(
-                                            module.call(args.entry, args.arg, args.out))
+        module.node.call(module, args.entry, args.arg, args.out))
 
     conf.cleanup()
 

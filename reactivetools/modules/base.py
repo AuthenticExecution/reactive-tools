@@ -37,7 +37,7 @@ class Module(ABC):
         except:
             logging.error("Failed to create build dir for {}".format(name))
             sys.exit(-1)
-            
+
 
     """
     ### Description ###
@@ -262,21 +262,6 @@ class Module(ABC):
     @staticmethod
     async def cleanup():
         pass
-
-
-    """
-    ### Description ###
-    Coroutine. Call an entrypoint of the module
-
-    ### Parameters ###
-    self: Module object
-    entry (str): name of the entry point to call
-    arg (bytes): argument to pass as a byte array (can be None)
-
-    ### Returns ###
-    """
-    async def call(self, entry, arg=None):
-        await self.node.call(self, entry, arg)
 
 
     """
