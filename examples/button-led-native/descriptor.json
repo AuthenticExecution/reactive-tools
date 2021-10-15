@@ -2,72 +2,74 @@
     "manager": "manager.yaml",
     "nodes": [
         {
-            "type": "sgx",
-            "name": "node1",
-            "ip_address": "127.0.0.1",
+            "type": "native",
+            "name": "node_sgx",
+            "ip_address": "node-sgx",
             "reactive_port": 5000
         },
         {
-            "type": "sgx",
-            "name": "node2",
-            "ip_address": "127.0.0.1",
-            "reactive_port": 6000
+            "type": "native",
+            "name": "node_sancus_1",
+            "ip_address": "node-sancus-1",
+            "reactive_port": 5000
+        },
+        {
+            "type": "native",
+            "name": "node_sancus_2",
+            "ip_address": "node-sancus-2",
+            "reactive_port": 5000
+        },
+        {
+            "type": "native",
+            "name": "node_trustzone",
+            "ip_address": "node-trustzone",
+            "reactive_port": 5000,
         }
     ],
     "modules" : [
         {
-            "type": "sgx",
+            "type": "native",
             "name": "webserver",
-            "node": "node1",
-            "vendor_key": "<Insert path to your private key here>",
-            "ra_settings": "<Insert path to your settings JSON file here>"
+            "node": "node_sgx"
         },
         {
-            "type": "sgx",
+            "type": "native",
             "name": "db",
-            "node": "node1",
-            "vendor_key": "<Insert path to your private key here>",
-            "ra_settings": "<Insert path to your settings JSON file here>"
+            "node": "node_sgx"
         },
         {
-            "type": "sgx",
-            "name": "controller",
-            "node": "node1",
-            "vendor_key": "<Insert path to your private key here>",
-            "ra_settings": "<Insert path to your settings JSON file here>"
+            "type": "native",
+            "name": "gateway",
+            "node": "node_trustzone"
         },
         {
-            "type": "sgx",
-            "name": "button_driver",
-            "node": "node2",
-            "vendor_key": "<Insert path to your private key here>",
-            "ra_settings": "<Insert path to your settings JSON file here>"
-        },
-        {
-            "type": "sgx",
+            "type": "native",
             "name": "led_driver",
-            "node": "node2",
-            "vendor_key": "<Insert path to your private key here>",
-            "ra_settings": "<Insert path to your settings JSON file here>"
+            "node": "node_sancus_1"
+        },
+        {
+            "type": "native",
+            "name": "button_driver",
+            "node": "node_sancus_2"
         }
     ],
     "connections": [
       {
           "from_module": "button_driver",
           "from_output": "button_pressed",
-          "to_module": "controller",
+          "to_module": "gateway",
           "to_input": "button_pressed",
           "encryption": "aes"
       },
       {
-          "from_module": "controller",
+          "from_module": "gateway",
           "from_output": "toggle_led",
           "to_module": "led_driver",
           "to_input": "toggle_led",
           "encryption": "aes"
       },
       {
-          "from_module": "controller",
+          "from_module": "gateway",
           "from_output": "increment_presses",
           "to_module": "db",
           "to_input": "increment_presses",
@@ -84,7 +86,7 @@
           "name": "init-server",
           "direct": true,
           "to_module": "webserver",
-          "to_input": "init",
+          "to_handler": "init_server",
           "encryption": "aes"
       },
       {
