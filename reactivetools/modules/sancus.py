@@ -4,6 +4,7 @@ import binascii
 from enum import Enum
 from collections import namedtuple
 import json
+import yaml
 
 from elftools.elf import elffile
 
@@ -202,14 +203,43 @@ class SancusModule(Module):
         binary = tools.create_tmp(suffix='.elf', dir=self.name)
         ldflags = config.ldflags + self.ldflags
 
-        # setting connections (if not specified in JSON file)
-        if not any("--num-connections" in flag for flag in ldflags):
-            ldflags.append("--num-connections {}".format(self.connections))
+        # prepare the config file for this SM
+        ldflags = await self.__prepare_config_file(ldflags)
 
         await tools.run_async(config.ld, *ldflags,
                               '-o', binary, *objects.values())
         return binary
 
+
+    async def __prepare_config_file(self, ldflags):
+        # try to get sm config file if present in self.ldflags
+        # otherwise, create empty file
+        try:
+            # fetch the name
+            flag = next(filter(lambda x : "--sm-config-file" in x, ldflags))
+            config_file = flag.split()[1]
+
+            # open the file and parse it
+            with open(config_file, "r") as f:
+                config = yaml.load(f)
+        except:
+            # we create a new file with empty config
+            config_file = tools.create_tmp(suffix='.yaml', dir=self.name)
+            config = { self.name : [] }
+
+            # remove old flag if present, append new one
+            ldflags = list(filter(lambda x : "--sm-config-file" not in x, ldflags))
+            ldflags.append("--sm-config-file {}".format(config_file))
+
+        # override num_connections if the value is present and is < self.connections
+        if "num_connections" not in config or config["num_connections"] < self.connections:
+            config[self.name].append({"num_connections": self.connections})
+
+        # save changes
+        with open(config_file, "w") as f:
+            yaml.dump(config, f)
+
+        return ldflags
 
 
     async def _calculate_key(self):
