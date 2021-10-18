@@ -262,8 +262,13 @@ class NativeModule(Module):
         cmd = BUILD_APP.format(release, features, self.out_dir).split()
         await tools.run_async(*cmd)
 
+        # TODO there might be problems with two (or more) modules built from
+        #      the same source code but with different features. Since the
+        #      working dir is the same (for caching reasons) there might be some
+        #      problems when these SMs are built at the same time.
+        #      Find a way to solve this issue.
         binary = os.path.join(self.out_dir,
-                        "target", glob.get_build_mode().to_str(), self.name)
+                        "target", glob.get_build_mode().to_str(), self.folder)
 
         logging.info("Built module {}".format(self.name))
         return binary

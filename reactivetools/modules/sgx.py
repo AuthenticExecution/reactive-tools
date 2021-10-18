@@ -18,7 +18,7 @@ ATTESTER = "sgx-attester"
 
 # SGX build/sign
 SGX_TARGET = "x86_64-fortanix-unknown-sgx"
-BUILD_APP = "cargo build {{}} {{}} --target={} --manifest-path={{}}/Cargo.toml".format( SGX_TARGET)
+BUILD_APP = "cargo build {{}} {{}} --target={} --manifest-path={{}}/Cargo.toml".format(SGX_TARGET)
 CONVERT_SGX = "ftxsgx-elf2sgxs {} --heap-size 0x20000 --stack-size 0x20000 --threads 4 {}"
 SIGN_SGX = "sgxs-sign --key {} {} {} {} --xfrm 7/0 --isvprodid 0 --isvsvn 0"
 
@@ -328,8 +328,13 @@ class SGXModule(Module):
         cmd = BUILD_APP.format(release, features, self.out_dir).split()
         await tools.run_async(*cmd)
 
+        # TODO there might be problems with two (or more) modules built from
+        #      the same source code but with different features. Since the
+        #      working dir is the same (for caching reasons) there might be some
+        #      problems when these SMs are built at the same time.
+        #      Find a way to solve this issue.
         binary = os.path.join(self.out_dir, "target", SGX_TARGET,
-                        glob.get_build_mode().to_str(), self.name)
+                        glob.get_build_mode().to_str(), self.folder)
 
         logging.info("Built module {}".format(self.name))
 
@@ -340,8 +345,10 @@ class SGXModule(Module):
         binary = await self.binary
         debug = "--debug" if glob.get_build_mode() == glob.BuildMode.DEBUG else ""
 
-        sgxs = "{}.sgxs".format(binary)
-        sig = "{}.sig".format(binary)
+        # use this format for the file names to deal with multiple SMs built
+        # from the same source code
+        sgxs = "{}-{}.sgxs".format(binary, self.name)
+        sig = "{}-{}.sig".format(binary, self.name)
 
         cmd_convert = CONVERT_SGX.format(binary, debug).split()
         cmd_sign = SIGN_SGX.format(self.vendor_key, sgxs, sig, debug).split()
