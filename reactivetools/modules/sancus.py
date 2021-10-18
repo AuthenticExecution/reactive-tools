@@ -5,6 +5,7 @@ from enum import Enum
 from collections import namedtuple
 import json
 import yaml
+import os
 
 from elftools.elf import elffile
 
@@ -23,7 +24,8 @@ class Error(Exception):
 class SancusModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, files,
             cflags, ldflags, binary, id, symtab, key):
-        super().__init__(name, node, priority, deployed, nonce, attested)
+        self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
+        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
         self.files = files
         self.cflags = cflags
@@ -33,7 +35,6 @@ class SancusModule(Module):
         self.__deploy_fut = tools.init_future(id, symtab)
         self.__key_fut = tools.init_future(key)
         self.__attest_fut = tools.init_future(attested if attested else None)
-
 
     @staticmethod
     def load(mod_dict, node_obj):
@@ -192,7 +193,7 @@ class SancusModule(Module):
                      self.name, ', '.join(map(str, self.files)))
 
         config = self._get_build_config(tools.get_verbosity())
-        objects = {str(p): tools.create_tmp(suffix='.o', dir=self.name) for p in self.files}
+        objects = {str(p): tools.create_tmp(suffix='.o', dir=self.out_dir) for p in self.files}
 
         cflags = config.cflags + self.cflags
         build_obj = lambda c, o: tools.run_async(config.cc, *cflags,
@@ -200,7 +201,7 @@ class SancusModule(Module):
         build_futs = [build_obj(c, o) for c, o in objects.items()]
         await asyncio.gather(*build_futs)
 
-        binary = tools.create_tmp(suffix='.elf', dir=self.name)
+        binary = tools.create_tmp(suffix='.elf', dir=self.out_dir)
         ldflags = config.ldflags + self.ldflags
 
         # prepare the config file for this SM
@@ -224,7 +225,7 @@ class SancusModule(Module):
                 config = yaml.load(f)
         except:
             # we create a new file with empty config
-            config_file = tools.create_tmp(suffix='.yaml', dir=self.name)
+            config_file = tools.create_tmp(suffix='.yaml', dir=self.out_dir)
             config = { self.name : [] }
 
             # remove old flag if present, append new one
@@ -258,7 +259,7 @@ class SancusModule(Module):
 
 
     async def __link(self):
-        linked_binary = tools.create_tmp(suffix='.elf', dir=self.name)
+        linked_binary = tools.create_tmp(suffix='.elf', dir=self.out_dir)
 
         # NOTE: we use '--noinhibit-exec' flag because the linker complains
         #       if the addresses of .bss section are not aligned to 2 bytes

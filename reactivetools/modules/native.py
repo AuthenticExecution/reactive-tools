@@ -24,7 +24,8 @@ class Error(Exception):
 class NativeModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, features,
                 id, binary, key, data, folder, port):
-        super().__init__(name, node, priority, deployed, nonce, attested)
+        self.out_dir = os.path.join(glob.BUILD_DIR, "native-{}".format(folder))
+        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
         self.__generate_fut = tools.init_future(data, key)
         self.__build_fut = tools.init_future(binary)
@@ -32,7 +33,6 @@ class NativeModule(Module):
         self.features = [] if features is None else features
         self.id = id if id is not None else node.get_module_id()
         self.port = port or self.node.reactive_port + self.id
-        self.output = os.path.join(glob.BUILD_DIR, folder)
         self.folder = folder
 
 
@@ -240,7 +240,7 @@ class NativeModule(Module):
         args = Object()
 
         args.input = self.folder
-        args.output = self.output
+        args.output = self.out_dir
         args.moduleid = self.id
         args.emport = self.node.deploy_port
         args.runner = rustsgxgen.Runner.NATIVE
@@ -259,10 +259,10 @@ class NativeModule(Module):
         release = "--release" if glob.get_build_mode() == glob.BuildMode.RELEASE else ""
         features = "--features " + " ".join(self.features) if self.features else ""
 
-        cmd = BUILD_APP.format(release, features, self.output).split()
+        cmd = BUILD_APP.format(release, features, self.out_dir).split()
         await tools.run_async(*cmd)
 
-        binary = os.path.join(self.output,
+        binary = os.path.join(self.out_dir,
                         "target", glob.get_build_mode().to_str(), self.name)
 
         logging.info("Built module {}".format(self.name))

@@ -7,7 +7,7 @@ class Error(Exception):
     pass
 
 class Module(ABC):
-    def __init__(self, name, node, priority, deployed, nonce, attested):
+    def __init__(self, name, node, priority, deployed, nonce, attested, out_dir):
         """
         Generic attributes common to all Module subclasses
 
@@ -31,7 +31,7 @@ class Module(ABC):
 
         # create temp dir
         try:
-            os.mkdir(os.path.join(glob.BUILD_DIR, name))
+            os.mkdir(os.path.join(glob.BUILD_DIR, out_dir))
         except FileExistsError:
             pass
         except:

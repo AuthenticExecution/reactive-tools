@@ -3,6 +3,7 @@ import asyncio
 import binascii
 import hashlib
 import json
+import os
 
 from .base import Module
 from ..nodes import TrustZoneNode
@@ -18,12 +19,13 @@ class Error(Exception):
 COMPILER  = "CROSS_COMPILE=arm-linux-gnueabihf-"
 PLATFORM  = "PLATFORM=vexpress-qemu_virt"
 DEV_KIT   = "TA_DEV_KIT_DIR=/optee/optee_os/out/arm/export-ta_arm32"
-BUILD_CMD = "make -C {{}}/{{}} {} {} {} {{}} O={}/{{}}".format(COMPILER, PLATFORM, DEV_KIT, glob.BUILD_DIR)
+BUILD_CMD = "make -C {{}}/{{}} {} {} {} {{}} O={{}}".format(COMPILER, PLATFORM, DEV_KIT)
 
 class TrustZoneModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, files_dir,
                     binary, id, uuid, key, inputs, outputs, entrypoints):
-        super().__init__(name, node, priority, deployed, nonce, attested)
+        self.out_dir = os.path.join(glob.BUILD_DIR, "trustzone-{}".format(name))
+        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
         self.files_dir = files_dir
         self.id = id
@@ -176,11 +178,11 @@ class TrustZoneModule(Module):
         self.uuid_for_MK = '%s-%s-%s-%s-%s' % (hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
 
         binary_name = "BINARY=" + self.uuid_for_MK
-        cmd = BUILD_CMD.format(self.files_dir, self.name, binary_name, self.name)
+        cmd = BUILD_CMD.format(self.files_dir, self.name, binary_name, self.out_dir)
 
         await tools.run_async_shell(cmd)
 
-        binary = "{}/{}/{}.ta".format(glob.BUILD_DIR, self.name, self.uuid_for_MK)
+        binary = "{}/{}.ta".format(self.out_dir, self.uuid_for_MK)
 
         return binary
 
