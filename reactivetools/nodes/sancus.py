@@ -88,7 +88,7 @@ class SancusNode(Node):
                             .format(module.name, self.name))
 
         symtab = res.message.payload[2:]
-        symtab_file = tools.create_tmp(suffix='.ld', dir=module.name)
+        symtab_file = tools.create_tmp(suffix='.ld', dir=module.out_dir)
 
         # aiofile for write operations is bugged (version 3.3.3)
         # I get a "bad file descriptor" error after writes.
