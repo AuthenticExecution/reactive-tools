@@ -345,9 +345,10 @@ class SGXModule(Module):
         binary = await self.binary
         debug = "--debug" if glob.get_build_mode() == glob.BuildMode.DEBUG else ""
 
+        sgxs = "{}.sgxs".format(binary, self.name)
+        
         # use this format for the file names to deal with multiple SMs built
-        # from the same source code
-        sgxs = "{}-{}.sgxs".format(binary, self.name)
+        # from the same source code, but with different vendor keys
         sig = "{}-{}.sig".format(binary, self.name)
 
         cmd_convert = CONVERT_SGX.format(binary, debug).split()
