@@ -77,27 +77,26 @@ async def decrypt_aes(key, ad, data=b''):
 
 async def encrypt_spongent(key, ad, data=[]):
     try:
-        import sancus.crypto
+        import sancus.libsancuscrypt as sancus_crypto
     except:
         raise Error("Sancus python libraries not found in PYTHONPATH")
 
-    cipher, tag = sancus.crypto.wrap(key, ad, data)
+    cipher, tag = sancus_crypto.wrap(key, ad, data)
     return cipher + tag
 
 
 async def decrypt_spongent(key, ad, data=[]):
     try:
-        import sancus.crypto
-        import sancus.config
+        import sancus.libsancuscrypt as sancus_crypto
     except:
         raise Error("Sancus python libraries not found in PYTHONPATH")
 
     # data should be formed like this: [cipher, tag]
-    tag_size = sancus.config.SECURITY // 8
+    tag_size = sancus_crypto.KEY_SIZE
     cipher = data[:-tag_size]
     tag = data[-tag_size:]
 
-    plain = sancus.crypto.unwrap(key, ad, cipher, tag)
+    plain = sancus_crypto.unwrap(key, ad, cipher, tag)
 
     if plain is None:
         raise Error("Decryption failed")

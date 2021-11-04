@@ -244,18 +244,16 @@ class SancusModule(Module):
 
 
     async def _calculate_key(self):
-        try:
-            import sancus.crypto
-        except:
-            raise Error("Sancus python libraries not found in PYTHONPATH")
-
         linked_binary = await self.__link()
 
-        with open(linked_binary, 'rb') as f:
-            key = sancus.crypto.get_sm_key(f, self.name, self.node.vendor_key)
-            logging.info('Module key for %s: %s',
-                         self.name, binascii.hexlify(key).decode('ascii'))
-            return key
+        args = "{} --gen-sm-key {} --key {}".format(
+            linked_binary, self.name, self.node.vendor_key
+        ).split()
+
+        key, _ = await tools.run_async_output("sancus-crypto", *args)
+        logging.info('Module key for %s: %s', self.name, key)
+
+        return binascii.unhexlify(key)
 
 
     async def __link(self):
