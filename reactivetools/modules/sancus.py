@@ -234,13 +234,13 @@ class SancusModule(Module):
         linked_binary = await self.__link()
 
         args = "{} --gen-sm-key {} --key {}".format(
-            linked_binary, self.name, self.node.vendor_key
+            linked_binary, self.name, dump(self.node.vendor_key)
         ).split()
 
         key, _ = await tools.run_async_output("sancus-crypto", *args)
-        logging.info('Module key for %s: %s', self.name, key)
+        logging.info('Module key for %s: %s', self.name, dump(key))
 
-        return binascii.unhexlify(key)
+        return key
 
     async def __link(self):
         linked_binary = tools.create_tmp(suffix='.elf', dir=self.out_dir)
