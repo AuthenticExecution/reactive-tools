@@ -16,12 +16,12 @@ from ..loaders import *
 class Error(Exception):
     pass
 
+
 class TrustZoneNode(Node):
     def __init__(self, name, ip_address, reactive_port, deploy_port, node_key):
         super().__init__(name, ip_address, reactive_port, deploy_port, need_lock=False)
 
         self.node_key = node_key
-
 
     @staticmethod
     def load(node_dict):
@@ -33,7 +33,6 @@ class TrustZoneNode(Node):
 
         return TrustZoneNode(name, ip_address, reactive_port, deploy_port, node_key)
 
-
     def dump(self):
         return {
             "type": "trustzone",
@@ -43,7 +42,6 @@ class TrustZoneNode(Node):
             "deploy_port": self.deploy_port,
             "node_key": dump(self.node_key)
         }
-
 
     async def deploy(self, module):
         assert module.node is self
@@ -61,16 +59,15 @@ class TrustZoneNode(Node):
         payload = size + id + uid + file_data
 
         command = CommandMessageLoad(payload,
-                                self.ip_address,
-                                self.deploy_port)
+                                     self.ip_address,
+                                     self.deploy_port)
 
         await self._send_reactive_command(
             command,
             log='Deploying {} on {}'.format(module.name, self.name)
-            )
+        )
 
         module.deployed = True
-
 
     async def attest(self, module):
         assert module.node is self
@@ -79,20 +76,20 @@ class TrustZoneNode(Node):
 
         challenge = tools.generate_key(16)
 
-        payload =       tools.pack_int16(module_id)                     + \
-                        tools.pack_int16(ReactiveEntrypoint.Attest)     + \
-                        tools.pack_int16(len(challenge))                + \
-                        challenge
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(ReactiveEntrypoint.Attest) + \
+            tools.pack_int16(len(challenge)) + \
+            challenge
 
         command = CommandMessage(ReactiveCommand.Call,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         res = await self._send_reactive_command(
-                command,
-                log='Attesting {}'.format(module.name)
-                )
+            command,
+            log='Attesting {}'.format(module.name)
+        )
 
         # The result format is [tag] where the tag is the challenge's MAC
         challenge_response = res.message.payload
@@ -107,7 +104,6 @@ class TrustZoneNode(Node):
         logging.info("Attestation of {} succeeded".format(module.name))
         module.attested = True
 
-
     async def set_key(self, module, conn_id, conn_io, encryption, key):
         assert module.node is self
         assert encryption in module.get_supported_encryption()
@@ -119,26 +115,26 @@ class TrustZoneNode(Node):
         nonce = module.nonce
         module.nonce += 1
 
-        ad =    tools.pack_int8(encryption)                     + \
-                tools.pack_int16(conn_id)                       + \
-                tools.pack_int16(io_id)                         + \
-                tools.pack_int16(nonce)
+        ad = tools.pack_int8(encryption) + \
+            tools.pack_int16(conn_id) + \
+            tools.pack_int16(io_id) + \
+            tools.pack_int16(nonce)
 
         cipher = await encryption.AES.encrypt(module_key, ad, key)
 
-        payload =   tools.pack_int16(module_id)                       + \
-                    tools.pack_int16(ReactiveEntrypoint.SetKey)       + \
-                    ad                                                + \
-                    cipher
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(ReactiveEntrypoint.SetKey) + \
+            ad + \
+            cipher
 
         command = CommandMessage(ReactiveCommand.Call,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         await self._send_reactive_command(
-                command,
-                log='Setting key of connection {} ({}:{}) on {} to {}'.format(
-                     conn_id, module.name, conn_io.name, self.name,
-                     binascii.hexlify(key).decode('ascii'))
-                )
+            command,
+            log='Setting key of connection {} ({}:{}) on {} to {}'.format(
+                conn_id, module.name, conn_io.name, self.name,
+                binascii.hexlify(key).decode('ascii'))
+        )

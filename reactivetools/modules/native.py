@@ -14,8 +14,10 @@ from ..loaders import *
 
 BUILD_APP = "cargo build {} {} --manifest-path={}/Cargo.toml"
 
+
 class Object():
     pass
+
 
 class Error(Exception):
     pass
@@ -23,7 +25,7 @@ class Error(Exception):
 
 class NativeModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, features,
-                id, binary, key, data, folder, port):
+                 id, binary, key, data, folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "native-{}".format(folder))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
@@ -34,7 +36,6 @@ class NativeModule(Module):
         self.id = id if id is not None else node.get_module_id()
         self.port = port or self.node.reactive_port + self.id
         self.folder = folder
-
 
     @staticmethod
     def load(mod_dict, node_obj):
@@ -53,7 +54,7 @@ class NativeModule(Module):
         port = mod_dict.get('port')
 
         return NativeModule(name, node, priority, deployed, nonce, attested,
-                features, id, binary, key, data, folder, port)
+                            features, id, binary, key, data, folder, port)
 
     def dump(self):
         return {
@@ -67,7 +68,8 @@ class NativeModule(Module):
             "features": self.features,
             "id": self.id,
             "binary": dump(self.binary) if self.deployed else None,
-            "key": dump(self.key) if self.deployed else None, # For native, key is generated at compile time
+            # For native, key is generated at compile time
+            "key": dump(self.key) if self.deployed else None,
             "data": dump(self.data) if self.deployed else None,
             "folder": self.folder,
             "port": self.port
@@ -85,24 +87,20 @@ class NativeModule(Module):
         data = await self.data
         return data["inputs"]
 
-
     @property
     async def outputs(self):
         data = await self.data
         return data["outputs"]
-
 
     @property
     async def entrypoints(self):
         data = await self.data
         return data["entrypoints"]
 
-
     @property
     async def handlers(self):
         data = await self.data
         return data["handlers"]
-
 
     @property
     async def requests(self):
@@ -114,11 +112,9 @@ class NativeModule(Module):
         _data, key = await self.generate_code()
         return key
 
-
     @property
     async def binary(self):
         return await self.build()
-
 
     # --- Implement abstract methods --- #
 
@@ -128,10 +124,8 @@ class NativeModule(Module):
 
         return await self.__build_fut
 
-
     async def deploy(self):
         await self.node.deploy(self)
-
 
     async def attest(self):
         if glob.get_att_man():
@@ -141,10 +135,8 @@ class NativeModule(Module):
 
         self.attested = True
 
-
     async def get_id(self):
         return self.id
-
 
     async def get_input_id(self, input):
         if isinstance(input, int):
@@ -157,7 +149,6 @@ class NativeModule(Module):
 
         return inputs[input]
 
-
     async def get_output_id(self, output):
         if isinstance(output, int):
             return output
@@ -168,7 +159,6 @@ class NativeModule(Module):
             raise Error("Output not present in outputs")
 
         return outputs[output]
-
 
     async def get_entry_id(self, entry):
         try:
@@ -181,7 +171,6 @@ class NativeModule(Module):
 
             return entrypoints[entry]
 
-
     async def get_request_id(self, request):
         if isinstance(request, int):
             return request
@@ -192,7 +181,6 @@ class NativeModule(Module):
             raise Error("Request not present in requests")
 
         return requests[request]
-
 
     async def get_handler_id(self, handler):
         if isinstance(handler, int):
@@ -205,20 +193,16 @@ class NativeModule(Module):
 
         return handlers[handler]
 
-
     async def get_key(self):
         return await self.key
-
 
     @staticmethod
     def get_supported_nodes():
         return [NativeNode]
 
-
     @staticmethod
     def get_supported_encryption():
         return [Encryption.AES, Encryption.SPONGENT]
-
 
     # --- Static methods --- #
 
@@ -229,7 +213,6 @@ class NativeModule(Module):
             self.__generate_fut = asyncio.ensure_future(self.__generate_code())
 
         return await self.__generate_fut
-
 
     async def __generate_code(self):
         try:
@@ -252,12 +235,12 @@ class NativeModule(Module):
 
         return data, key
 
-
     async def __build(self):
         await self.generate_code()
 
         release = "--release" if glob.get_build_mode() == glob.BuildMode.RELEASE else ""
-        features = "--features " + " ".join(self.features) if self.features else ""
+        features = "--features " + \
+            " ".join(self.features) if self.features else ""
 
         cmd = BUILD_APP.format(release, features, self.out_dir).split()
         await tools.run_async(*cmd)
@@ -268,11 +251,10 @@ class NativeModule(Module):
         #      problems when these SMs are built at the same time.
         #      Find a way to solve this issue.
         binary = os.path.join(self.out_dir,
-                        "target", glob.get_build_mode().to_str(), self.folder)
+                              "target", glob.get_build_mode().to_str(), self.folder)
 
         logging.info("Built module {}".format(self.name))
         return binary
-
 
     async def __attest_manager(self):
         data = {
@@ -288,12 +270,14 @@ class NativeModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-native --data {}".format(
-                    self.manager.config, data_file).split()
+            self.manager.config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
-        key_arr = eval(out) # from string to array
-        key = bytes(key_arr) # from array to bytes
+        key_arr = eval(out)  # from string to array
+        key = bytes(key_arr)  # from array to bytes
 
         if await self.key != key:
-            raise Error("Received key is different from {} key".format(self.name))
+            raise Error(
+                "Received key is different from {} key".format(self.name))
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(self.name, key_arr))
+        logging.info("Done Remote Attestation of {}. Key: {}".format(
+            self.name, key_arr))

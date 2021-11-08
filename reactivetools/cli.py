@@ -323,7 +323,6 @@ def _handle_output(args):
     else:
         conn = conf.get_connection_by_name(args.connection)
 
-
     if not conn.direct:
         raise Error("Connection is not direct.")
 
@@ -331,7 +330,7 @@ def _handle_output(args):
         raise Error("Not a output-input connection")
 
     asyncio.get_event_loop().run_until_complete(
-                                    conn.to_module.node.output(conn, args.arg))
+        conn.to_module.node.output(conn, args.arg))
 
     conn.nonce += 1
     out_file = args.result or args.config
@@ -349,7 +348,6 @@ def _handle_request(args):
     else:
         conn = conf.get_connection_by_name(args.connection)
 
-
     if not conn.direct:
         raise Error("Connection is not direct.")
 
@@ -357,7 +355,7 @@ def _handle_request(args):
         raise Error("Not a request-handler connection")
 
     asyncio.get_event_loop().run_until_complete(
-                                    conn.to_module.node.request(conn, args.arg, args.out))
+        conn.to_module.node.request(conn, args.arg, args.out))
 
     conn.nonce += 2
     out_file = args.result or args.config

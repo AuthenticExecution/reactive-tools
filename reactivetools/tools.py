@@ -10,6 +10,7 @@ import ipaddress
 
 from . import glob
 
+
 class ProcessRunError(Exception):
     def __init__(self, args, result):
         self.args = args
@@ -17,7 +18,7 @@ class ProcessRunError(Exception):
 
     def __str__(self):
         return 'Command "{}" exited with code {}' \
-                    .format(' '.join(self.args), self.result)
+            .format(' '.join(self.args), self.result)
 
 
 class Error(Exception):
@@ -59,9 +60,10 @@ async def run_async(*args, output_file=os.devnull, env=None):
     logging.debug(' '.join(args))
 
     process = await asyncio.create_subprocess_exec(*args,
-                                            stdout=open(output_file, 'wb'),
-                                            stderr=get_stderr(),
-                                            env=env)
+                                                   stdout=open(
+                                                       output_file, 'wb'),
+                                                   stderr=get_stderr(),
+                                                   env=env)
     result = await process.wait()
 
     if result != 0:
@@ -71,9 +73,10 @@ async def run_async(*args, output_file=os.devnull, env=None):
 async def run_async_background(*args, env=None):
     logging.debug(' '.join(args))
     process = await asyncio.create_subprocess_exec(*args,
-                                            stdout=open(os.devnull, 'wb'),
-                                            stderr=get_stderr(),
-                                            env=env)
+                                                   stdout=open(
+                                                       os.devnull, 'wb'),
+                                                   stderr=get_stderr(),
+                                                   env=env)
 
     return process
 
@@ -82,9 +85,9 @@ async def run_async_output(*args, env=None):
     cmd = ' '.join(args)
     logging.debug(cmd)
     process = await asyncio.create_subprocess_exec(*args,
-                                            stdout=asyncio.subprocess.PIPE,
-                                            stderr=asyncio.subprocess.PIPE,
-                                            env=env)
+                                                   stdout=asyncio.subprocess.PIPE,
+                                                   stderr=asyncio.subprocess.PIPE,
+                                                   env=env)
     out, err = await process.communicate()
     result = await process.wait()
 
@@ -98,9 +101,10 @@ async def run_async_shell(*args, env=None):
     cmd = ' '.join(args)
     logging.debug(cmd)
     process = await asyncio.create_subprocess_shell(cmd,
-                                            stdout=open(os.devnull, 'wb'),
-                                            stderr=get_stderr(),
-                                            env=env)
+                                                    stdout=open(
+                                                        os.devnull, 'wb'),
+                                                    stderr=get_stderr(),
+                                                    env=env)
     result = await process.wait()
 
     if result != 0:
@@ -125,7 +129,6 @@ def resolve_ip(host):
     raise Error("Invalid host: {}".format(host))
 
 
-
 def create_tmp(suffix='', dir=''):
     dir = os.path.join(glob.BUILD_DIR, dir)
     fd, path = tempfile.mkstemp(suffix=suffix, dir=dir)
@@ -144,17 +147,22 @@ def generate_key(length):
 def pack_int8(i):
     return struct.pack('!B', i)
 
+
 def unpack_int8(i):
     return struct.unpack('!B', i)[0]
+
 
 def pack_int16(i):
     return struct.pack('!H', i)
 
+
 def unpack_int16(i):
     return struct.unpack('!H', i)[0]
 
+
 def pack_int32(i):
     return struct.pack('!I', i)
+
 
 def unpack_int32(i):
     return struct.unpack('!I', i)[0]

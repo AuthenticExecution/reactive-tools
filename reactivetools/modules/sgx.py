@@ -18,13 +18,15 @@ ATTESTER = "sgx-attester"
 
 # SGX build/sign
 SGX_TARGET = "x86_64-fortanix-unknown-sgx"
-BUILD_APP = "cargo build {{}} {{}} --target={} --manifest-path={{}}/Cargo.toml".format(SGX_TARGET)
+BUILD_APP = "cargo build {{}} {{}} --target={} --manifest-path={{}}/Cargo.toml".format(
+    SGX_TARGET)
 CONVERT_SGX = "ftxsgx-elf2sgxs {} --heap-size 0x20000 --stack-size 0x20000 --threads 4 {}"
 SIGN_SGX = "sgxs-sign --key {} {} {} {} --xfrm 7/0 --isvprodid 0 --isvsvn 0"
 
 
 class Object():
     pass
+
 
 class Error(Exception):
     pass
@@ -34,8 +36,8 @@ class SGXModule(Module):
     sp_lock = asyncio.Lock()
 
     def __init__(self, name, node, priority, deployed, nonce, attested, vendor_key,
-                ra_settings, features, id, binary, key, sgxs, signature, data,
-                folder, port):
+                 ra_settings, features, id, binary, key, sgxs, signature, data,
+                 folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sgx-{}".format(folder))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
@@ -52,7 +54,6 @@ class SGXModule(Module):
         self.id = id if id is not None else node.get_module_id()
         self.port = port or self.node.reactive_port + self.id
         self.folder = folder
-
 
     @staticmethod
     def load(mod_dict, node_obj):
@@ -75,8 +76,8 @@ class SGXModule(Module):
         port = mod_dict.get('port')
 
         return SGXModule(name, node, priority, deployed, nonce, attested, vendor_key,
-                settings, features, id, binary, key, sgxs, signature, data, folder,
-                port)
+                         settings, features, id, binary, key, sgxs, signature, data, folder,
+                         port)
 
     def dump(self):
         return {
@@ -112,55 +113,49 @@ class SGXModule(Module):
         data = await self.data
         return data["inputs"]
 
-
     @property
     async def outputs(self):
         data = await self.data
         return data["outputs"]
-
 
     @property
     async def entrypoints(self):
         data = await self.data
         return data["entrypoints"]
 
-
     @property
     async def handlers(self):
         data = await self.data
         return data["handlers"]
-
 
     @property
     async def requests(self):
         data = await self.data
         return data["requests"]
 
-
     @property
     async def binary(self):
         return await self.build()
 
-
     @property
     async def sgxs(self):
         if self.__convert_sign_fut is None:
-            self.__convert_sign_fut = asyncio.ensure_future(self.__convert_sign())
+            self.__convert_sign_fut = asyncio.ensure_future(
+                self.__convert_sign())
 
         sgxs, _ = await self.__convert_sign_fut
 
         return sgxs
 
-
     @property
     async def sig(self):
         if self.__convert_sign_fut is None:
-            self.__convert_sign_fut = asyncio.ensure_future(self.__convert_sign())
+            self.__convert_sign_fut = asyncio.ensure_future(
+                self.__convert_sign())
 
         _, sig = await self.__convert_sign_fut
 
         return sig
-
 
     # --- Implement abstract methods --- #
 
@@ -170,10 +165,8 @@ class SGXModule(Module):
 
         return await self.__build_fut
 
-
     async def deploy(self):
         await self.node.deploy(self)
-
 
     async def attest(self):
         if glob.get_att_man():
@@ -184,10 +177,8 @@ class SGXModule(Module):
 
             await self.__attest_fut
 
-
     async def get_id(self):
         return self.id
-
 
     async def get_input_id(self, input):
         if isinstance(input, int):
@@ -200,7 +191,6 @@ class SGXModule(Module):
 
         return inputs[input]
 
-
     async def get_output_id(self, output):
         if isinstance(output, int):
             return output
@@ -211,7 +201,6 @@ class SGXModule(Module):
             raise Error("Output not present in outputs")
 
         return outputs[output]
-
 
     async def get_entry_id(self, entry):
         if entry.isnumeric():
@@ -224,7 +213,6 @@ class SGXModule(Module):
 
         return entrypoints[entry]
 
-
     async def get_request_id(self, request):
         if isinstance(request, int):
             return request
@@ -235,7 +223,6 @@ class SGXModule(Module):
             raise Error("Request not present in requests")
 
         return requests[request]
-
 
     async def get_handler_id(self, handler):
         if isinstance(handler, int):
@@ -248,27 +235,22 @@ class SGXModule(Module):
 
         return handlers[handler]
 
-
     async def get_key(self):
         return self.key
-
 
     @staticmethod
     def get_supported_nodes():
         return [SGXNode]
 
-
     @staticmethod
     def get_supported_encryption():
         return [Encryption.AES, Encryption.SPONGENT]
-
 
     # --- Static methods --- #
 
     @staticmethod
     async def cleanup():
         pass
-
 
     # --- Others --- #
 
@@ -277,25 +259,21 @@ class SGXModule(Module):
 
         return pub
 
-
     async def get_ra_sp_priv_key(self):
         _, priv, _ = await self.__sp_keys_fut
 
         return priv
-
 
     async def get_ias_root_certificate(self):
         _, _, cert = await self.__sp_keys_fut
 
         return cert
 
-
     async def generate_code(self):
         if self.__generate_fut is None:
             self.__generate_fut = asyncio.ensure_future(self.__generate_code())
 
         return await self.__generate_fut
-
 
     async def __generate_code(self):
         try:
@@ -318,12 +296,12 @@ class SGXModule(Module):
 
         return data
 
-
     async def __build(self):
         await self.generate_code()
 
         release = "--release" if glob.get_build_mode() == glob.BuildMode.RELEASE else ""
-        features = "--features " + " ".join(self.features) if self.features else ""
+        features = "--features " + \
+            " ".join(self.features) if self.features else ""
 
         cmd = BUILD_APP.format(release, features, self.out_dir).split()
         await tools.run_async(*cmd)
@@ -334,19 +312,18 @@ class SGXModule(Module):
         #      problems when these SMs are built at the same time.
         #      Find a way to solve this issue.
         binary = os.path.join(self.out_dir, "target", SGX_TARGET,
-                        glob.get_build_mode().to_str(), self.folder)
+                              glob.get_build_mode().to_str(), self.folder)
 
         logging.info("Built module {}".format(self.name))
 
         return binary
-
 
     async def __convert_sign(self):
         binary = await self.binary
         debug = "--debug" if glob.get_build_mode() == glob.BuildMode.DEBUG else ""
 
         sgxs = "{}.sgxs".format(binary, self.name)
-        
+
         # use this format for the file names to deal with multiple SMs built
         # from the same source code, but with different vendor keys
         sig = "{}-{}.sig".format(binary, self.name)
@@ -361,7 +338,6 @@ class SGXModule(Module):
 
         return sgxs, sig
 
-
     async def __attest(self):
         env = {}
         env["SP_PRIVKEY"] = await self.get_ra_sp_priv_key()
@@ -374,13 +350,13 @@ class SGXModule(Module):
         env["AESM_PORT"] = str(self.node.aesm_port)
 
         out, _ = await tools.run_async_output(ATTESTER, env=env)
-        key_arr = eval(out) # from string to array
-        key = bytes(key_arr) # from array to bytes
+        key_arr = eval(out)  # from string to array
+        key = bytes(key_arr)  # from array to bytes
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(self.name, key_arr))
+        logging.info("Done Remote Attestation of {}. Key: {}".format(
+            self.name, key_arr))
         self.key = key
         self.attested = True
-
 
     async def __attest_manager(self):
         data = {
@@ -399,15 +375,15 @@ class SGXModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-sgx --data {}".format(
-                    self.manager.config, data_file).split()
+            self.manager.config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
-        key_arr = eval(out) # from string to array
-        key = bytes(key_arr) # from array to bytes
+        key_arr = eval(out)  # from string to array
+        key = bytes(key_arr)  # from array to bytes
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(self.name, key_arr))
+        logging.info("Done Remote Attestation of {}. Key: {}".format(
+            self.name, key_arr))
         self.key = key
         self.attested = True
-
 
     async def __generate_sp_keys(self):
         async with self.sp_lock:
@@ -416,13 +392,14 @@ class SGXModule(Module):
             ias_cert = os.path.join(glob.BUILD_DIR, "ias_root_ca.pem")
 
             # check if already generated in a previous run
-            if all(map(lambda x : os.path.exists(x), [priv, pub, ias_cert])):
+            if all(map(lambda x: os.path.exists(x), [priv, pub, ias_cert])):
                 return pub, priv, ias_cert
 
             cmd = "openssl"
 
             args_private = "genrsa -f4 -out {} 2048".format(priv).split()
-            args_public = "rsa -in {} -outform PEM -pubout -out {}".format(priv, pub).split()
+            args_public = "rsa -in {} -outform PEM -pubout -out {}".format(
+                priv, pub).split()
 
             await tools.run_async_shell(cmd, *args_private)
             await tools.run_async_shell(cmd, *args_public)

@@ -5,17 +5,17 @@ from .sgx import SGXNode
 from .trustzone import TrustZoneNode
 
 node_rules = {
-    "sancus"    : "sancus.yaml",
-    "sgx"       : "sgx.yaml",
-    "native"    : "native.yaml",
-    "trustzone" : "trustzone.yaml"
+    "sancus": "sancus.yaml",
+    "sgx": "sgx.yaml",
+    "native": "native.yaml",
+    "trustzone": "trustzone.yaml"
 }
 
 node_funcs = {
-    "sancus"    : SancusNode.load,
-    "sgx"       : SGXNode.load,
-    "native"    : NativeNode.load,
-    "trustzone" : TrustZoneNode.load
+    "sancus": SancusNode.load,
+    "sgx": SGXNode.load,
+    "native": NativeNode.load,
+    "trustzone": TrustZoneNode.load
 }
 
 node_cleanup_coros = [

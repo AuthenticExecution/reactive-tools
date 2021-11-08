@@ -3,8 +3,10 @@ import os
 import logging
 from .. import glob
 
+
 class Error(Exception):
     pass
+
 
 class Module(ABC):
     def __init__(self, name, node, priority, deployed, nonce, attested, out_dir):
@@ -38,7 +40,6 @@ class Module(ABC):
             logging.error("Failed to create build dir for {}".format(name))
             sys.exit(-1)
 
-
     """
     ### Description ###
     Creates a XXXModule object from a dict
@@ -56,7 +57,6 @@ class Module(ABC):
     @abstractmethod
     def load(mod_dict, node_obj):
         pass
-
 
     """
     ### Description ###
@@ -76,7 +76,6 @@ class Module(ABC):
     def dump(self):
         pass
 
-
     """
     ### Description ###
     Coroutine. Create the binary file from sources
@@ -90,7 +89,6 @@ class Module(ABC):
     @abstractmethod
     async def build(self):
         pass
-
 
     """
     ### Description ###
@@ -108,7 +106,6 @@ class Module(ABC):
     async def deploy(self):
         pass
 
-
     """
     ### Description ###
     Coroutine. Attest a deployed module
@@ -121,7 +118,6 @@ class Module(ABC):
     @abstractmethod
     async def attest(self):
         pass
-
 
     """
     ### Description ###
@@ -140,7 +136,6 @@ class Module(ABC):
     async def get_id(self):
         pass
 
-
     """
     ### Description ###
     Coroutine. Get the ID of the input passed as parameter
@@ -157,7 +152,6 @@ class Module(ABC):
     @abstractmethod
     async def get_input_id(self, input):
         pass
-
 
     """
     ### Description ###
@@ -176,7 +170,6 @@ class Module(ABC):
     async def get_output_id(self, output):
         pass
 
-
     """
     ### Description ###
     Coroutine. Get the ID of the entry point passed as parameter
@@ -194,7 +187,6 @@ class Module(ABC):
     async def get_entry_id(self, entry):
         pass
 
-
     """
     ### Description ###
     Coroutine. Get the module's key
@@ -208,7 +200,6 @@ class Module(ABC):
     @abstractmethod
     async def get_key(self):
         pass
-
 
     """
     ### Description ###
@@ -225,7 +216,6 @@ class Module(ABC):
     @abstractmethod
     def get_supported_nodes():
         pass
-
 
     """
     ### Description ###
@@ -244,12 +234,10 @@ class Module(ABC):
     def get_supported_encryption():
         pass
 
-
     """
     Default implementation of some functions.
     Override them in the subclasses if you need a different implementation.
     """
-
 
     """
     ### Description ###
@@ -262,7 +250,6 @@ class Module(ABC):
     @staticmethod
     async def cleanup():
         pass
-
 
     """
     ### Description ###
@@ -279,8 +266,7 @@ class Module(ABC):
     """
     async def get_request_id(self, request):
         raise Error("Request/handler messages not supported for {}".format(
-                self.__class__.name))
-
+            self.__class__.name))
 
     """
     ### Description ###
@@ -297,4 +283,4 @@ class Module(ABC):
     """
     async def get_handler_id(self, handler):
         raise Error("Request/handler messages not supported for {}".format(
-                self.__class__.name))
+            self.__class__.name))

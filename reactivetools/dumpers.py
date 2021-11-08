@@ -3,6 +3,7 @@ import functools
 import types
 import binascii
 
+
 @functools.singledispatch
 def dump(obj):
     assert False, 'No dumper for {}'.format(type(obj))
@@ -27,7 +28,7 @@ def _(x):
 
 @dump.register(tuple)
 def _(t):
-    return { t[1] : t[0] }
+    return {t[1]: t[0]}
 
 
 @dump.register(types.CoroutineType)

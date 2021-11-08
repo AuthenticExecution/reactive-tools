@@ -4,6 +4,7 @@ import logging
 
 from ..descriptor import DescriptorType
 
+
 def is_present(dict, key):
     return key in dict and dict[key] is not None
 

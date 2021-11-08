@@ -2,19 +2,20 @@ import subprocess
 import sys
 import yaml
 
-ATTESTER       = "sgx-attester"
+ATTESTER = "sgx-attester"
 manager_config = sys.argv[1] if len(sys.argv) > 1 else "manager.yaml"
+
 
 def attest(manager):
     env = {
-        "AESM_HOST" : "aesm-client",
-        "AESM_PORT" : "13741",
-        "ENCLAVE_HOST" : manager["host"],
-        "ENCLAVE_PORT" : str(manager["port"]),
-        "SP_PRIVKEY" : "cred/manager_privkey.pem",
-        "ENCLAVE_SIG" : "cred/manager.sig",
-        "IAS_CERT" : "cred/ias_root_ca.pem",
-        "ENCLAVE_SETTINGS" : "cred/settings.json",
+        "AESM_HOST": "aesm-client",
+        "AESM_PORT": "13741",
+        "ENCLAVE_HOST": manager["host"],
+        "ENCLAVE_PORT": str(manager["port"]),
+        "SP_PRIVKEY": "cred/manager_privkey.pem",
+        "ENCLAVE_SIG": "cred/manager.sig",
+        "IAS_CERT": "cred/ias_root_ca.pem",
+        "ENCLAVE_SETTINGS": "cred/settings.json",
     }
 
     try:

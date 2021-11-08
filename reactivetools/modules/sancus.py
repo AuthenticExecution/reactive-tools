@@ -17,13 +17,14 @@ from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
 
+
 class Error(Exception):
     pass
 
 
 class SancusModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, files,
-            cflags, ldflags, binary, id, symtab, key):
+                 cflags, ldflags, binary, id, symtab, key):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
@@ -45,7 +46,7 @@ class SancusModule(Module):
         nonce = mod_dict.get('nonce')
         attested = mod_dict.get('attested')
         files = load_list(mod_dict['files'],
-                           lambda f: parse_file_name(f))
+                          lambda f: parse_file_name(f))
         cflags = load_list(mod_dict.get('cflags'))
         ldflags = load_list(mod_dict.get('ldflags'))
         binary = parse_file_name(mod_dict.get('binary'))
@@ -54,8 +55,7 @@ class SancusModule(Module):
         key = parse_key(mod_dict.get('key'))
 
         return SancusModule(name, node, priority, deployed, nonce, attested,
-                files, cflags, ldflags, binary, id, symtab, key)
-
+                            files, cflags, ldflags, binary, id, symtab, key)
 
     def dump(self):
         return {
@@ -74,7 +74,6 @@ class SancusModule(Module):
             "symtab": dump(self.symtab) if self.deployed else None,
             "key": dump(self.key) if self.deployed else None
         }
-
 
     # --- Properties --- #
 
@@ -99,7 +98,6 @@ class SancusModule(Module):
 
         return await self.__key_fut
 
-
     # --- Implement abstract methods --- #
 
     async def build(self):
@@ -108,35 +106,30 @@ class SancusModule(Module):
 
         return await self.__build_fut
 
-
     async def deploy(self):
         if self.__deploy_fut is None:
             self.__deploy_fut = asyncio.ensure_future(self.node.deploy(self))
 
         return await self.__deploy_fut
 
-
     async def attest(self):
         if glob.get_att_man():
             await self.__attest_manager()
         else:
             if self.__attest_fut is None:
-                self.__attest_fut = asyncio.ensure_future(self.node.attest(self))
+                self.__attest_fut = asyncio.ensure_future(
+                    self.node.attest(self))
 
             await self.__attest_fut
-
 
     async def get_id(self):
         return await self.id
 
-
     async def get_input_id(self, input):
         return await self.get_io_id(input)
 
-
     async def get_output_id(self, output):
         return await self.get_io_id(output)
-
 
     async def get_entry_id(self, entry):
         # If it is a number, that is the ID (given by the deployer)
@@ -145,20 +138,16 @@ class SancusModule(Module):
 
         return await self._get_entry_id(entry)
 
-
     async def get_key(self):
         return await self.key
-
 
     @staticmethod
     def get_supported_nodes():
         return [SancusNode]
 
-
     @staticmethod
     def get_supported_encryption():
         return [Encryption.SPONGENT]
-
 
     # --- Static methods --- #
 
@@ -175,8 +164,7 @@ class SancusModule(Module):
         ldflags = flags + ['--inline-arithmetic']
 
         return _BuildConfig(cc='sancus-cc', cflags=cflags,
-                            ld='sancus-ld', ldflags=ldflags )
-
+                            ld='sancus-ld', ldflags=ldflags)
 
     # --- Others --- #
 
@@ -187,17 +175,17 @@ class SancusModule(Module):
 
         return await self._get_io_id(io)
 
-
     async def __build(self):
         logging.info('Building module %s from %s',
                      self.name, ', '.join(map(str, self.files)))
 
         config = self._get_build_config(tools.get_verbosity())
-        objects = {str(p): tools.create_tmp(suffix='.o', dir=self.out_dir) for p in self.files}
+        objects = {str(p): tools.create_tmp(
+            suffix='.o', dir=self.out_dir) for p in self.files}
 
         cflags = config.cflags + self.cflags
-        build_obj = lambda c, o: tools.run_async(config.cc, *cflags,
-                                                 '-c', '-o', o, c)
+        def build_obj(c, o): return tools.run_async(config.cc, *cflags,
+                                                    '-c', '-o', o, c)
         build_futs = [build_obj(c, o) for c, o in objects.items()]
         await asyncio.gather(*build_futs)
 
@@ -211,13 +199,12 @@ class SancusModule(Module):
                               '-o', binary, *objects.values())
         return binary
 
-
     async def __prepare_config_file(self, ldflags):
         # try to get sm config file if present in self.ldflags
         # otherwise, create empty file
         try:
             # fetch the name
-            flag = next(filter(lambda x : "--sm-config-file" in x, ldflags))
+            flag = next(filter(lambda x: "--sm-config-file" in x, ldflags))
             config_file = flag.split()[1]
 
             # open the file and parse it
@@ -226,10 +213,11 @@ class SancusModule(Module):
         except:
             # we create a new file with empty config
             config_file = tools.create_tmp(suffix='.yaml', dir=self.out_dir)
-            config = { self.name : [] }
+            config = {self.name: []}
 
             # remove old flag if present, append new one
-            ldflags = list(filter(lambda x : "--sm-config-file" not in x, ldflags))
+            ldflags = list(
+                filter(lambda x: "--sm-config-file" not in x, ldflags))
             ldflags.append("--sm-config-file {}".format(config_file))
 
         # override num_connections if the value is present and is < self.connections
@@ -241,7 +229,6 @@ class SancusModule(Module):
             yaml.dump(config, f)
 
         return ldflags
-
 
     async def _calculate_key(self):
         linked_binary = await self.__link()
@@ -255,7 +242,6 @@ class SancusModule(Module):
 
         return binascii.unhexlify(key)
 
-
     async def __link(self):
         linked_binary = tools.create_tmp(suffix='.elf', dir=self.out_dir)
 
@@ -263,9 +249,8 @@ class SancusModule(Module):
         #       if the addresses of .bss section are not aligned to 2 bytes
         #       using this flag instead, the output file is still generated
         await tools.run_async('msp430-ld', '-T', await self.symtab,
-                      '-o', linked_binary, '--noinhibit-exec', await self.binary)
+                              '-o', linked_binary, '--noinhibit-exec', await self.binary)
         return linked_binary
-
 
     async def _get_io_id(self, io_name):
         sym_name = '__sm_{}_io_{}_idx'.format(self.name, io_name)
@@ -273,10 +258,9 @@ class SancusModule(Module):
 
         if symbol is None:
             raise Error('Module {} has no endpoint named {}'
-                            .format(self.name, io_name))
+                        .format(self.name, io_name))
 
         return symbol
-
 
     async def _get_entry_id(self, entry_name):
         sym_name = '__sm_{}_entry_{}_idx'.format(self.name, entry_name)
@@ -284,14 +268,14 @@ class SancusModule(Module):
 
         if symbol is None:
             raise Error('Module {} has no entry named {}'
-                            .format(self.name, entry_name))
+                        .format(self.name, entry_name))
 
         return symbol
 
-
     async def __get_symbol(self, name):
         if not await self.binary:
-            raise Error("ELF file not present for {}, cannot extract symbol ID of {}".format(self.name, name))
+            raise Error("ELF file not present for {}, cannot extract symbol ID of {}".format(
+                self.name, name))
 
         with open(await self.binary, 'rb') as f:
             elf = elffile.ELFFile(f)
@@ -301,7 +285,6 @@ class SancusModule(Module):
                         sym_section = symbol['st_shndx']
                         if symbol.name == name and sym_section != 'SHN_UNDEF':
                             return symbol['st_value']
-
 
     async def __attest_manager(self):
         data = {
@@ -317,15 +300,17 @@ class SancusModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-sancus --data {}".format(
-                    self.manager.config, data_file).split()
+            self.manager.config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
-        key_arr = eval(out) # from string to array
-        key = bytes(key_arr) # from array to bytes
+        key_arr = eval(out)  # from string to array
+        key = bytes(key_arr)  # from array to bytes
 
         if await self.key != key:
-            raise Error("Received key is different from {} key".format(self.name))
+            raise Error(
+                "Received key is different from {} key".format(self.name))
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(self.name, key_arr))
+        logging.info("Done Remote Attestation of {}. Key: {}".format(
+            self.name, key_arr))
         self.attested = True
 
 

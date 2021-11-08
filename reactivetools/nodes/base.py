@@ -9,8 +9,10 @@ from reactivenet import *
 
 from .. import tools
 
+
 class Error(Exception):
     pass
+
 
 class Node(ABC):
     def __init__(self, name, ip_address, reactive_port, deploy_port, need_lock=False):
@@ -36,7 +38,6 @@ class Node(ABC):
         else:
             self.__lock = None
 
-
     """
     ### Description ###
     Creates a XXXNode object from a dict
@@ -53,7 +54,6 @@ class Node(ABC):
     @abstractmethod
     def load(node_dict):
         pass
-
 
     """
     ### Description ###
@@ -72,7 +72,6 @@ class Node(ABC):
     @abstractmethod
     def dump(self):
         pass
-
 
     """
     ### Description ###
@@ -94,7 +93,6 @@ class Node(ABC):
     @abstractmethod
     async def deploy(self, module):
         pass
-
 
     """
     ### Description ###
@@ -123,12 +121,10 @@ class Node(ABC):
     async def set_key(self, module, conn_id, conn_io, encryption, key):
         pass
 
-
     """
     Default implementation of some functions.
     Override them in the subclasses if you need a different implementation.
     """
-
 
     """
     ### Description ###
@@ -141,7 +137,6 @@ class Node(ABC):
     @staticmethod
     async def cleanup():
         pass
-
 
     """
     ### Description ###
@@ -158,21 +153,20 @@ class Node(ABC):
     async def connect(self, to_module, conn_id):
         module_id = await to_module.get_id()
 
-        payload = tools.pack_int16(conn_id)                           + \
-                  tools.pack_int16(module_id)                         + \
-                  tools.pack_int8(int(to_module.node is self))        + \
-                  tools.pack_int16(to_module.node.reactive_port)      + \
-                  to_module.node.ip_address.packed
+        payload = tools.pack_int16(conn_id) + \
+            tools.pack_int16(module_id) + \
+            tools.pack_int8(int(to_module.node is self)) + \
+            tools.pack_int16(to_module.node.reactive_port) + \
+            to_module.node.ip_address.packed
 
         command = CommandMessage(ReactiveCommand.Connect,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         await self._send_reactive_command(
-                command,
-                log='Connecting id {} to {}'.format(conn_id, to_module.name))
-
+            command,
+            log='Connecting id {} to {}'.format(conn_id, to_module.name))
 
     """
     ### Description ###
@@ -192,20 +186,20 @@ class Node(ABC):
         module_id, entry_id = \
             await asyncio.gather(module.get_id(), module.get_entry_id(entry))
 
-        payload = tools.pack_int16(module_id)       + \
-                  tools.pack_int16(entry_id)        + \
-                  (b'' if arg is None else arg)
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(entry_id) + \
+            (b'' if arg is None else arg)
 
         command = CommandMessage(ReactiveCommand.Call,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         response = await self._send_reactive_command(
-                command,
-                log='Sending call command to {}:{} ({}:{}) on {}'.format(
-                     module.name, entry, module_id, entry_id, self.name)
-                )
+            command,
+            log='Sending call command to {}:{} ({}:{}) on {}'.format(
+                module.name, entry, module_id, entry_id, self.name)
+        )
 
         if not response.ok():
             logging.error("Received error code {}".format(str(response.code)))
@@ -217,7 +211,6 @@ class Node(ABC):
         else:
             with open(output, "wb") as f:
                 f.write(plaintext)
-
 
     """
     ### Description ###
@@ -241,23 +234,22 @@ class Node(ABC):
             data = arg
 
         cipher = await connection.encryption.encrypt(connection.key,
-                    tools.pack_int16(connection.nonce), data)
+                                                     tools.pack_int16(connection.nonce), data)
 
-        payload = tools.pack_int16(module_id)               + \
-                  tools.pack_int16(connection.id)           + \
-                  cipher
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(connection.id) + \
+            cipher
 
         command = CommandMessage(ReactiveCommand.RemoteOutput,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         await self._send_reactive_command(
-                command,
-                log='Sending handle_output command of connection {}:{} to {} on {}'.format(
-                     connection.id, connection.name, connection.to_module.name, self.name)
-                )
-
+            command,
+            log='Sending handle_output command of connection {}:{} to {} on {}'.format(
+                connection.id, connection.name, connection.to_module.name, self.name)
+        )
 
     """
     ### Description ###
@@ -281,22 +273,22 @@ class Node(ABC):
             data = arg
 
         cipher = await connection.encryption.encrypt(connection.key,
-                    tools.pack_int16(connection.nonce), data)
+                                                     tools.pack_int16(connection.nonce), data)
 
-        payload = tools.pack_int16(module_id)               + \
-                  tools.pack_int16(connection.id)           + \
-                  cipher
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(connection.id) + \
+            cipher
 
         command = CommandMessage(ReactiveCommand.RemoteRequest,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         response = await self._send_reactive_command(
-                command,
-                log='Sending handle_request command of connection {}:{} to {} on {}'.format(
-                     connection.id, connection.name, connection.to_module.name, self.name)
-                )
+            command,
+            log='Sending handle_request command of connection {}:{} to {} on {}'.format(
+                connection.id, connection.name, connection.to_module.name, self.name)
+        )
 
         if not response.ok():
             logging.error("Received error code {}".format(str(response.code)))
@@ -304,7 +296,7 @@ class Node(ABC):
 
         resp_encrypted = response.message.payload
         plaintext = await connection.encryption.decrypt(connection.key,
-                    tools.pack_int16(connection.nonce + 1), resp_encrypted)
+                                                        tools.pack_int16(connection.nonce + 1), resp_encrypted)
 
         if output is None:
             logging.info("Response: \"{}\"".format(
@@ -312,8 +304,6 @@ class Node(ABC):
         else:
             with open(output, "wb") as f:
                 f.write(plaintext)
-
-
 
     """
     ### Description ###
@@ -332,21 +322,20 @@ class Node(ABC):
         module_id, entry_id = \
             await asyncio.gather(module.get_id(), module.get_entry_id(entry))
 
-        payload = tools.pack_int16(module_id)       + \
-                  tools.pack_int16(entry_id)        + \
-                  tools.pack_int32(frequency)
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(entry_id) + \
+            tools.pack_int32(frequency)
 
         command = CommandMessage(ReactiveCommand.RegisterEntrypoint,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         await self._send_reactive_command(
-                command,
-                log='Sending RegisterEntrypoint command of {}:{} ({}:{}) on {}'.format(
-                     module.name, entry, module_id, entry_id, self.name)
-                )
-
+            command,
+            log='Sending RegisterEntrypoint command of {}:{} ({}:{}) on {}'.format(
+                module.name, entry, module_id, entry_id, self.name)
+        )
 
     """
     ### Description ###
@@ -366,8 +355,6 @@ class Node(ABC):
         else:
             return await self.__send_reactive_command(command, log)
 
-
-
     """
     ### Description ###
     Static coroutine. Helper function used to send a ReactiveCommand message to the node
@@ -386,10 +373,10 @@ class Node(ABC):
             logging.info(log)
 
         if command.has_response():
-            response =  await command.send_wait()
+            response = await command.send_wait()
             if not response.ok():
                 raise Error('Reactive command {} failed with code {}'
-                                .format(str(command.code), str(response.code)))
+                            .format(str(command.code), str(response.code)))
             return response
 
         else:

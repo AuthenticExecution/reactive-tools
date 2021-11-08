@@ -6,12 +6,14 @@ from Crypto.Cipher import AES
 from . import tools
 from . import glob
 
+
 class Error(Exception):
     pass
 
+
 class Encryption(IntEnum):
-    AES         = 0x0 # aes-gcm-128
-    SPONGENT    = 0x1 # spongent-128
+    AES = 0x0  # aes-gcm-128
+    SPONGENT = 0x1  # spongent-128
 
     @staticmethod
     def from_str(str):

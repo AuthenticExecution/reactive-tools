@@ -48,14 +48,12 @@ class Config:
 
         raise Error('No module with name {}'.format(name))
 
-
     def get_connection_by_id(self, id):
         for c in self.connections:
             if c.id == id:
                 return c
 
         raise Error('No connection with ID {}'.format(id))
-
 
     def get_connection_by_name(self, name):
         for c in self.connections:
@@ -64,7 +62,6 @@ class Config:
 
         raise Error('No connection with name {}'.format(name))
 
-
     def get_periodic_event(self, name):
         for e in self.periodic_events:
             if e.name == name:
@@ -72,15 +69,15 @@ class Config:
 
         raise Error('No periodic event with name {}'.format(name))
 
-
     async def deploy_priority_modules(self):
-        priority_modules = [sm for sm in self.modules if sm.priority is not None and not sm.deployed]
-        priority_modules.sort(key=lambda sm : sm.priority)
+        priority_modules = [
+            sm for sm in self.modules if sm.priority is not None and not sm.deployed]
+        priority_modules.sort(key=lambda sm: sm.priority)
 
-        logging.debug("Priority modules: {}".format([sm.name for sm in priority_modules]))
+        logging.debug("Priority modules: {}".format(
+            [sm.name for sm in priority_modules]))
         for module in priority_modules:
             await module.deploy()
-
 
     async def deploy_async(self, in_order, module):
         # If module is not None, deploy just this one
@@ -104,16 +101,14 @@ class Config:
         # Otherwise, deploy all modules concurrently
         else:
             lst = self.modules
-            l_filter = lambda x : not x.deployed
-            l_map = lambda x : x.deploy()
+            def l_filter(x): return not x.deployed
+            def l_map(x): return x.deploy()
 
             futures = map(l_map, filter(l_filter, lst))
             await asyncio.gather(*futures)
 
-
     def deploy(self, in_order, module):
         asyncio.get_event_loop().run_until_complete(self.deploy_async(in_order, module))
-
 
     async def build_async(self, module):
         lst = self.modules if not module else [self.get_module(module)]
@@ -121,71 +116,65 @@ class Config:
         futures = [module.build() for module in lst]
         await asyncio.gather(*futures)
 
-
     def build(self, module):
         asyncio.get_event_loop().run_until_complete(self.build_async(module))
-
 
     async def attest_async(self, module):
         lst = self.modules if not module else [self.get_module(module)]
 
-        to_attest = list(filter(lambda x : not x.attested, lst))
+        to_attest = list(filter(lambda x: not x.attested, lst))
 
-        if any(map(lambda x : not x.deployed, to_attest)):
+        if any(map(lambda x: not x.deployed, to_attest)):
             raise Error("One or more modules to attest are not deployed yet")
 
         logging.info("To attest: {}".format([x.name for x in to_attest]))
 
-        futures = map(lambda x : x.attest(), to_attest)
+        futures = map(lambda x: x.attest(), to_attest)
         await asyncio.gather(*futures)
-
 
     def attest(self, module):
         asyncio.get_event_loop().run_until_complete(self.attest_async(module))
 
-
     async def connect_async(self, conn):
-        lst = self.connections if not conn else [self.get_connection_by_name(conn)]
+        lst = self.connections if not conn else [
+            self.get_connection_by_name(conn)]
 
-        to_connect = list(filter(lambda x : not x.established, lst))
+        to_connect = list(filter(lambda x: not x.established, lst))
 
         if any(map(
-            lambda x : (x.from_module and not x.from_module.attested) or
-            not x.to_module.attested, to_connect)):
+                lambda x: (x.from_module and not x.from_module.attested) or
+                not x.to_module.attested, to_connect)):
             raise Error("One or more modules to connect are not attested yet")
 
         logging.info("To connect: {}".format([x.name for x in to_connect]))
 
-        futures = map(lambda x : x.establish(), to_connect)
+        futures = map(lambda x: x.establish(), to_connect)
         await asyncio.gather(*futures)
-
 
     def connect(self, conn):
         asyncio.get_event_loop().run_until_complete(self.connect_async(conn))
 
-
     async def register_async(self, event):
-        lst = self.periodic_events if not event else [self.get_periodic_event(event)]
+        lst = self.periodic_events if not event else [
+            self.get_periodic_event(event)]
 
-        to_register = list(filter(lambda x : not x.established, lst))
+        to_register = list(filter(lambda x: not x.established, lst))
 
-        if any(map(lambda x : not x.module.attested, to_register)):
+        if any(map(lambda x: not x.module.attested, to_register)):
             raise Error("One or more modules are not attested yet")
 
         logging.info("To register: {}".format([x.name for x in to_register]))
 
-        futures = map(lambda x : x.register(), to_register)
+        futures = map(lambda x: x.register(), to_register)
         await asyncio.gather(*futures)
-
 
     def register_event(self, event):
         asyncio.get_event_loop().run_until_complete(self.register_async(event))
 
-
     async def cleanup_async(self):
-        coros = list(map(lambda c: c(), node_cleanup_coros + module_cleanup_coros))
+        coros = list(
+            map(lambda c: c(), node_cleanup_coros + module_cleanup_coros))
         await asyncio.gather(*coros)
-
 
     def cleanup(self):
         asyncio.get_event_loop().run_until_complete(self.cleanup_async())
@@ -206,22 +195,22 @@ def load(file_name, output_type=None):
         config.manager = _load_manager(contents['manager'], config)
 
     config.nodes = load_list(contents['nodes'],
-                                lambda n: _load_node(n, config))
+                             lambda n: _load_node(n, config))
     config.modules = load_list(contents['modules'],
-                                lambda m: _load_module(m, config))
+                               lambda m: _load_module(m, config))
 
     config.connections_current_id = contents.get('connections_current_id') or 0
     config.events_current_id = contents.get('events_current_id') or 0
 
     if 'connections' in contents:
         config.connections = load_list(contents['connections'],
-                                        lambda c: _load_connection(c, config))
+                                       lambda c: _load_connection(c, config))
     else:
         config.connections = []
 
     if 'periodic-events' in contents:
         config.periodic_events = load_list(contents['periodic-events'],
-                                        lambda e: _load_periodic_event(e, config))
+                                           lambda e: _load_periodic_event(e, config))
     else:
         config.periodic_events = []
 
@@ -232,7 +221,8 @@ def _load_node(node_dict, config):
     # Basic rules common to all nodes
     evaluate_rules(os.path.join("default", "node.yaml"), node_dict)
     # Specific rules for a specific node type
-    evaluate_rules(os.path.join("nodes", node_rules[node_dict['type']]), node_dict)
+    evaluate_rules(os.path.join(
+        "nodes", node_rules[node_dict['type']]), node_dict)
 
     return node_funcs[node_dict['type']](node_dict)
 
@@ -241,7 +231,8 @@ def _load_module(mod_dict, config):
     # Basic rules common to all nodes
     evaluate_rules(os.path.join("default", "module.yaml"), mod_dict)
     # Specific rules for a specific node type
-    evaluate_rules(os.path.join("modules", module_rules[mod_dict['type']]), mod_dict)
+    evaluate_rules(os.path.join(
+        "modules", module_rules[mod_dict['type']]), mod_dict)
 
     node = config.get_node(mod_dict['node'])
     module = module_funcs[mod_dict['type']](mod_dict, node)
@@ -302,14 +293,14 @@ def dump_config(config, file_name):
 def _(config):
     dump(config.nodes)
     return {
-            'manager': dump(config.manager) if config.manager is not None else None,
-            'nodes': dump(config.nodes),
-            'modules': dump(config.modules),
-            'connections_current_id': config.connections_current_id,
-            'connections': dump(config.connections),
-            'events_current_id': config.events_current_id,
-            'periodic-events' : dump(config.periodic_events)
-        }
+        'manager': dump(config.manager) if config.manager is not None else None,
+        'nodes': dump(config.nodes),
+        'modules': dump(config.modules),
+        'connections_current_id': config.connections_current_id,
+        'connections': dump(config.connections),
+        'events_current_id': config.events_current_id,
+        'periodic-events': dump(config.periodic_events)
+    }
 
 
 @dump.register(Node)

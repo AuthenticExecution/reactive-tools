@@ -8,6 +8,7 @@ from .. import tools
 from ..dumpers import *
 from ..loaders import *
 
+
 class NativeNode(SGXBase):
     type = "native"
 
@@ -20,8 +21,7 @@ class NativeNode(SGXBase):
         module_id = node_dict.get('module_id')
 
         return NativeNode(name, ip_address, reactive_port, deploy_port,
-                    module_id)
-
+                          module_id)
 
     def dump(self):
         return {
@@ -33,7 +33,6 @@ class NativeNode(SGXBase):
             "module_id": self._moduleid
         }
 
-
     async def deploy(self, module):
         if module.deployed:
             return
@@ -41,16 +40,16 @@ class NativeNode(SGXBase):
         async with aiofile.AIOFile(await module.binary, "rb") as f:
             binary = await f.read()
 
-        payload =   tools.pack_int32(len(binary))             + \
-                    binary
+        payload = tools.pack_int32(len(binary)) + \
+            binary
 
         command = CommandMessageLoad(payload,
-                                self.ip_address,
-                                self.deploy_port)
+                                     self.ip_address,
+                                     self.deploy_port)
 
         await self._send_reactive_command(
             command,
             log='Deploying {} on {}'.format(module.name, self.name)
-            )
+        )
 
         module.deployed = True

@@ -12,15 +12,16 @@ from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
 
+
 class Error(Exception):
     pass
 
 
 class SetKeyResultCode(IntEnum):
-    Ok                = 0x0
+    Ok = 0x0
     IllegalConnection = 0x1
-    MalformedPayload  = 0x2
-    InternalError     = 0x3
+    MalformedPayload = 0x2
+    InternalError = 0x3
 
 
 class SancusNode(Node):
@@ -30,7 +31,6 @@ class SancusNode(Node):
 
         self.vendor_id = vendor_id
         self.vendor_key = vendor_key
-
 
     @staticmethod
     def load(node_dict):
@@ -44,7 +44,6 @@ class SancusNode(Node):
         return SancusNode(name, vendor_id, vendor_key,
                           ip_address, reactive_port, deploy_port)
 
-
     def dump(self):
         return {
             "type": "sancus",
@@ -56,7 +55,6 @@ class SancusNode(Node):
             "deploy_port": self.deploy_port
         }
 
-
     async def deploy(self, module):
         assert module.node is self
 
@@ -67,25 +65,24 @@ class SancusNode(Node):
             file_data = await f.read()
 
         # The packet format is [NAME \0 VID ELF_FILE]
-        payload =   module.name.encode('ascii') + b'\0'   + \
-                    tools.pack_int16(self.vendor_id)      + \
-                    file_data
+        payload = module.name.encode('ascii') + b'\0' + \
+            tools.pack_int16(self.vendor_id) + \
+            file_data
 
         command = CommandMessage(ReactiveCommand.Load,
-                                Message(payload),
-                                self.ip_address,
-                                self.deploy_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.deploy_port)
 
         res = await self._send_reactive_command(
-                command,
-                log='Deploying {} on {}'.format(module.name, self.name)
-                )
-
+            command,
+            log='Deploying {} on {}'.format(module.name, self.name)
+        )
 
         sm_id = tools.unpack_int16(res.message.payload[:2])
         if sm_id == 0:
             raise Error('Deploying {} on {} failed'
-                            .format(module.name, self.name))
+                        .format(module.name, self.name))
 
         symtab = res.message.payload[2:]
         symtab_file = tools.create_tmp(suffix='.ld', dir=module.out_dir)
@@ -93,11 +90,10 @@ class SancusNode(Node):
         # aiofile for write operations is bugged (version 3.3.3)
         # I get a "bad file descriptor" error after writes.
         with open(symtab_file, "wb") as f:
-            f.write(symtab[:-1]) # Drop last 0 byte
+            f.write(symtab[:-1])  # Drop last 0 byte
 
         module.deployed = True
         return sm_id, symtab_file
-
 
     async def attest(self, module):
         assert module.node is self
@@ -108,20 +104,20 @@ class SancusNode(Node):
 
         # The payload format is [sm_id, entry_id, 16 bit nonce, index, wrapped(key), tag]
         # where the tag includes the nonce and the index.
-        payload =       tools.pack_int16(module_id)                     + \
-                        tools.pack_int16(ReactiveEntrypoint.Attest)     + \
-                        tools.pack_int16(len(challenge))                + \
-                        challenge
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(ReactiveEntrypoint.Attest) + \
+            tools.pack_int16(len(challenge)) + \
+            challenge
 
         command = CommandMessage(ReactiveCommand.Call,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         res = await self._send_reactive_command(
-                command,
-                log='Attesting {}'.format(module.name)
-                )
+            command,
+            log='Attesting {}'.format(module.name)
+        )
 
         # The result format is [tag] where the tag is the challenge's MAC
         challenge_response = res.message.payload
@@ -133,13 +129,12 @@ class SancusNode(Node):
         logging.info("Attestation of {} succeeded".format(module.name))
         module.attested = True
 
-
     async def set_key(self, module, conn_id, conn_io, encryption, key):
         assert module.node is self
         assert encryption in module.get_supported_encryption()
 
         module_id, module_key, io_id = await asyncio.gather(
-                               module.id, module.key, conn_io.get_index(module))
+            module.id, module.key, conn_io.get_index(module))
 
         nonce = tools.pack_int16(module.nonce)
         io_id = tools.pack_int16(io_id)
@@ -152,19 +147,19 @@ class SancusNode(Node):
 
         # The payload format is [sm_id, entry_id, 16 bit nonce, index, wrapped(key), tag]
         # where the tag includes the nonce and the index.
-        payload =       tools.pack_int16(module_id)                     + \
-                        tools.pack_int16(ReactiveEntrypoint.SetKey)     + \
-                        ad                                              + \
-                        cipher
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(ReactiveEntrypoint.SetKey) + \
+            ad + \
+            cipher
 
         command = CommandMessage(ReactiveCommand.Call,
-                                Message(payload),
-                                self.ip_address,
-                                self.reactive_port)
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
 
         await self._send_reactive_command(
-                command,
-                log='Setting key of {}:{} on {} to {}'.format(
-                     module.name, conn_io.name, self.name,
-                     binascii.hexlify(key).decode('ascii'))
-                )
+            command,
+            log='Setting key of {}:{} on {} to {}'.format(
+                module.name, conn_io.name, self.name,
+                binascii.hexlify(key).decode('ascii'))
+        )

@@ -5,17 +5,17 @@ from .sgx import SGXModule
 from .trustzone import TrustZoneModule
 
 module_rules = {
-    "sancus"    : "sancus.yaml",
-    "sgx"       : "sgx.yaml",
-    "native"    : "native.yaml",
-    "trustzone" : "trustzone.yaml"
+    "sancus": "sancus.yaml",
+    "sgx": "sgx.yaml",
+    "native": "native.yaml",
+    "trustzone": "trustzone.yaml"
 }
 
 module_funcs = {
-    "sancus"    : SancusModule.load,
-    "sgx"       : SGXModule.load,
-    "native"    : NativeModule.load,
-    "trustzone" : TrustZoneModule.load
+    "sancus": SancusModule.load,
+    "sgx": SGXModule.load,
+    "native": NativeModule.load,
+    "trustzone": TrustZoneModule.load
 }
 
 module_cleanup_coros = [

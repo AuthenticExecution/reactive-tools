@@ -9,8 +9,8 @@ class Error(Exception):
 
 
 class DescriptorType(IntEnum):
-    JSON    = 0
-    YAML    = 1
+    JSON = 0
+    YAML = 1
 
     @staticmethod
     def from_str(type):
@@ -26,7 +26,6 @@ class DescriptorType(IntEnum):
 
         raise Error("Bad deployment descriptor type: {}".format(type))
 
-
     @staticmethod
     def load_any(file):
         if not os.path.exists(file):
@@ -38,8 +37,8 @@ class DescriptorType(IntEnum):
             try:
                 return DescriptorType.YAML.load(file), DescriptorType.YAML
             except:
-                raise Error("Input file {} is not a JSON, nor a YAML".format(file))
-
+                raise Error(
+                    "Input file {} is not a JSON, nor a YAML".format(file))
 
     def load(self, file):
         with open(file, 'r') as f:
@@ -48,7 +47,6 @@ class DescriptorType(IntEnum):
 
             if self == DescriptorType.YAML:
                 return yaml.load(f, Loader=yaml.FullLoader)
-
 
     def dump(self, file, data):
         with open(file, 'w') as f:

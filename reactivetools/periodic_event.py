@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+
 class PeriodicEvent:
     def __init__(self, name, id, module, entry, frequency, established):
         self.name = name
@@ -9,7 +10,6 @@ class PeriodicEvent:
         self.entry = entry
         self.frequency = frequency
         self.established = established
-
 
     @staticmethod
     def load(event_dict, config):
@@ -20,13 +20,12 @@ class PeriodicEvent:
         established = event_dict.get('established')
 
         if id is None:
-            id = config.events_current_id # incremental ID
+            id = config.events_current_id  # incremental ID
             config.events_current_id += 1
 
         name = event_dict.get('name') or "event{}".format(id)
 
         return PeriodicEvent(name, id, module, entry, frequency, established)
-
 
     def dump(self):
         return {
@@ -36,8 +35,7 @@ class PeriodicEvent:
             "entry": self.entry,
             "frequency": self.frequency,
             "established": self.established
-            }
-
+        }
 
     async def register(self):
         if self.established:
