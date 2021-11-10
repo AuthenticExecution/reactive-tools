@@ -1,14 +1,12 @@
-import asyncio
-import aiofile
-import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import binascii
 
-from reactivenet import *
+from reactivenet import ReactiveCommand, ReactiveEntrypoint, Message, \
+    CommandMessage, CommandMessageLoad
+
+import aiofile
 
 from .base import Node
-from ..connection import ConnectionIO
-from .. import glob
 from .. import tools
 from ..crypto import Encryption
 from ..dumpers import *
@@ -62,10 +60,10 @@ class SGXBase(Node):
         )
 
     def get_module_id(self):
-        id = self._moduleid
+        id_ = self._moduleid
         self._moduleid += 1
 
-        return id
+        return id_
 
 
 class SGXNode(SGXBase):

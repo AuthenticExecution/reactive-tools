@@ -1,7 +1,7 @@
 import json
-import yaml
 import os
 from enum import IntEnum
+import yaml
 
 
 class Error(Exception):
@@ -13,18 +13,18 @@ class DescriptorType(IntEnum):
     YAML = 1
 
     @staticmethod
-    def from_str(type):
-        if type is None:
+    def from_str(type_):
+        if type_ is None:
             return None
 
-        type_lower = type.lower()
+        type_lower = type_.lower()
 
         if type_lower == "json":
             return DescriptorType.JSON
         if type_lower == "yaml":
             return DescriptorType.YAML
 
-        raise Error("Bad deployment descriptor type: {}".format(type))
+        raise Error("Bad deployment descriptor type: {}".format(type_))
 
     @staticmethod
     def load_any(file):
@@ -48,6 +48,9 @@ class DescriptorType(IntEnum):
             if self == DescriptorType.YAML:
                 return yaml.load(f, Loader=yaml.FullLoader)
 
+            raise Error(
+                "load not implemented for {}".format(self.name))
+
     def dump(self, file, data):
         with open(file, 'w') as f:
             if self == DescriptorType.JSON:
@@ -55,3 +58,6 @@ class DescriptorType(IntEnum):
 
             if self == DescriptorType.YAML:
                 yaml.dump(data, f)
+
+            raise Error(
+                "dump not implemented for {}".format(self.name))

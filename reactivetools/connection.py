@@ -22,8 +22,8 @@ class ConnectionIO(IntEnum):
 
 
 class ConnectionIndex():
-    def __init__(self, type, name):
-        self.type = type
+    def __init__(self, type_, name):
+        self.type = type_
         self.name = name
         self.index = None
 
@@ -47,7 +47,7 @@ class ConnectionIndex():
 
 class Connection:
     def __init__(self, name, from_module, from_output, from_request, to_module,
-                 to_input, to_handler, encryption, key, id, nonce, direct, established):
+                 to_input, to_handler, encryption, key, id_, nonce, direct, established):
         self.name = name
         self.from_module = from_module
         self.from_output = from_output
@@ -57,7 +57,7 @@ class Connection:
         self.to_handler = to_handler
         self.encryption = encryption
         self.key = key
-        self.id = id
+        self.id = id_
         self.nonce = nonce
         self.established = established
 
@@ -66,11 +66,11 @@ class Connection:
             self.from_index = None
         else:
             self.direct = False  # to avoid assigning None
-            self.from_index = ConnectionIndex(ConnectionIO.OUTPUT, from_output) if from_output is not None \
-                else ConnectionIndex(ConnectionIO.REQUEST, from_request)
+            self.from_index = ConnectionIndex(ConnectionIO.OUTPUT, from_output) \
+                if from_output is not None else ConnectionIndex(ConnectionIO.REQUEST, from_request)
 
-        self.to_index = ConnectionIndex(ConnectionIO.INPUT, to_input) if to_input is not None \
-            else ConnectionIndex(ConnectionIO.HANDLER, to_handler)
+        self.to_index = ConnectionIndex(ConnectionIO.INPUT, to_input) \
+            if to_input is not None else ConnectionIndex(ConnectionIO.HANDLER, to_handler)
 
     @staticmethod
     def load(conn_dict, config):
@@ -86,21 +86,21 @@ class Connection:
         key = parse_key(conn_dict.get('key')) or Connection.generate_key(
             from_module, to_module, encryption)  # auto-generated key
         nonce = conn_dict.get('nonce') or 0
-        id = conn_dict.get('id')
+        id_ = conn_dict.get('id')
         established = conn_dict.get('established')
 
-        if id is None:
-            id = config.connections_current_id  # incremental ID
+        if id_ is None:
+            id_ = config.connections_current_id  # incremental ID
             config.connections_current_id += 1
 
-        name = conn_dict.get('name') or "conn{}".format(id)
+        name = conn_dict.get('name') or "conn{}".format(id_)
 
         if from_module is not None:
             from_module.connections += 1
         to_module.connections += 1
 
         return Connection(name, from_module, from_output, from_request, to_module,
-                          to_input, to_handler, encryption, key, id, nonce, direct, established)
+                          to_input, to_handler, encryption, key, id_, nonce, direct, established)
 
     def dump(self):
         from_module = None if self.direct else self.from_module.name
@@ -146,8 +146,8 @@ class Connection:
         await asyncio.gather(connect, set_key_from, set_key_to)
 
         logging.info('Connection %d:%s from %s:%s on %s to %s:%s on %s established',
-                     self.id, self.name, self.from_module.name, self.from_index.name, from_node.name,
-                     self.to_module.name, self.to_index.name, to_node.name)
+                     self.id, self.name, self.from_module.name, self.from_index.name,
+                     from_node.name, self.to_module.name, self.to_index.name, to_node.name)
 
     async def __establish_direct(self):
         to_node = self.to_module.node

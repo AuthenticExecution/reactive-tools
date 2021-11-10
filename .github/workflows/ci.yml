@@ -3,15 +3,11 @@ on:
   push:
     branches:
       - master
+      - main
   schedule:
     - cron: '0 0 2 */1 *' # Every month
   pull_request:
   workflow_dispatch: # Allow manual triggering
-
-env:
-  REPO: authexec/reactive-tools
-  EM_IMAGE: authexec/event-manager-sgx:latest
-  AM_IMAGE: authexec/attestation-manager:native
 
 jobs:
   build-test-publish:
@@ -20,71 +16,20 @@ jobs:
     -
       uses: actions/checkout@master
     -
+      name: code-check
+      run: |
+        sudo apt update && sudo apt install pylint
+        pip install -r requirements.txt
+        cd ..
+        pylint reactive-tools --rcfile reactive-tools/.pylintrc
+    -
       name: Build
       id: build
       uses: gianlu33/Publish-Docker-Github-Action@main
       with:
-        name: ${{ env.REPO }}
+        name: authexec/reactive-tools
         username: authexec
         password: ${{ secrets.DOCKER_TOKEN }}
         cache: ${{ github.event_name != 'schedule' }}
         tag_names: true
-        no_push: true
-    -
-      name: Test build
-      run: |
-        shopt -s expand_aliases
-        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/examples/button-led:/usr/src/app/ -v /usr/local/cargo/git:/usr/local/cargo/git -v /usr/local/cargo/registry:/usr/local/cargo/registry ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
-        REACTIVE_TOOLS --verbose build descriptor-local.json
-    -
-      name: Test deploy
-      run: |
-        docker run --rm --network=host --detach -e EM_PORT=5000 -e EM_SGX=false --name em-5000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e EM_PORT=6000 -e EM_SGX=false --name em-6000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e EM_PORT=7000 -e EM_SGX=false --name em-7000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e EM_PORT=8000 -e EM_SGX=false --name em-8000 ${{ env.EM_IMAGE }}
-        shopt -s expand_aliases
-        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/examples/button-led-native:/usr/src/app/ -v /usr/local/cargo/git:/usr/local/cargo/git -v /usr/local/cargo/registry:/usr/local/cargo/registry ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
-        REACTIVE_TOOLS --verbose deploy descriptor-local.json --result res.json
-        REACTIVE_TOOLS --verbose attest res.json
-        REACTIVE_TOOLS --verbose connect res.json
-        REACTIVE_TOOLS --verbose request res.json --connection init-server --arg beef --out cert.der
-        sleep 2
-        [ $(curl -k https://localhost:48879) -eq 0 ]
-        REACTIVE_TOOLS --verbose output res.json --connection trigger-btn
-        sleep 2
-        [ $(curl -k https://localhost:48879) -eq 1 ]
-        REACTIVE_TOOLS --verbose output res.json --connection trigger-btn
-        sleep 2
-        [ $(curl -k https://localhost:48879) -eq 2 ]
-        docker stop em-5000 em-6000 em-7000 em-8000
-    -
-      name: Test Attestation Manager
-      run: |
-        docker run --rm --network=host --detach -e EM_PORT=5000 -e EM_SGX=false --name em-5000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e EM_PORT=6000 -e EM_SGX=false --name em-6000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e EM_PORT=7000 -e EM_SGX=false --name em-7000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e EM_PORT=8000 -e EM_SGX=false --name em-8000 ${{ env.EM_IMAGE }}
-        docker run --rm --network=host --detach -e AM_PORT=1234 --name manager ${{ env.AM_IMAGE }}
-        shopt -s expand_aliases
-        alias REACTIVE_TOOLS="docker run --rm --network=host -v $(pwd)/examples/button-led-native:/usr/src/app/ -v /usr/local/cargo/git:/usr/local/cargo/git -v /usr/local/cargo/registry:/usr/local/cargo/registry ${{ env.REPO }}:${{ steps.build.outputs.tag }} reactive-tools"
-        REACTIVE_TOOLS --verbose --manager deploy descriptor-local.json --result res.json
-        REACTIVE_TOOLS --verbose --manager attest res.json
-        REACTIVE_TOOLS --verbose --manager connect res.json
-        REACTIVE_TOOLS --verbose request res.json --connection init-server --arg beef --out cert.der
-        sleep 2
-        [ $(curl -k https://localhost:48879) -eq 0 ]
-        REACTIVE_TOOLS --verbose output res.json --connection trigger-btn
-        sleep 2
-        [ $(curl -k https://localhost:48879) -eq 1 ]
-        REACTIVE_TOOLS --verbose output res.json --connection trigger-btn
-        sleep 2
-        [ $(curl -k https://localhost:48879) -eq 2 ]
-        docker stop em-5000 em-6000 em-7000 em-8000 manager
-    -
-      name: Push
-      if: ${{ github.event_name != 'pull_request' }}
-      run: |
-        docker login -u authexec -p ${{ secrets.DOCKER_TOKEN }}
-        docker push ${{ env.REPO }}:${{ steps.build.outputs.tag }}
-        docker logout
+

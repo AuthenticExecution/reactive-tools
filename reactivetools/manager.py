@@ -1,10 +1,19 @@
 import asyncio
-import logging
-import json
 
 from . import tools
 from . import glob
 from .descriptor import DescriptorType
+
+__manager = None
+
+
+def set_manager(man):
+    global __manager
+    __manager = man
+
+
+def get_manager():
+    return __manager
 
 
 class Manager:
@@ -18,7 +27,7 @@ class Manager:
         self.sp_pubkey = None
 
     @staticmethod
-    def load(man_file, man_dict, config):
+    def load(man_file, man_dict, _):
         host = man_dict['host']
         port = man_dict['port']
         key = man_dict['key']

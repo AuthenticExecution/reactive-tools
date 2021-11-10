@@ -1,18 +1,12 @@
 import binascii
 import os
 
-from . import tools
-
-
-class Error(Exception):
-    pass
-
 
 def load_list(l, load_func=lambda e: e):
     if l is None:
         return []
-    else:
-        return [load_func(e) for e in l]
+
+    return [load_func(e) for e in l]
 
 
 def parse_key(key_str):

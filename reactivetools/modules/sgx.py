@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import os
-import aiofile
 import json
+import rustsgxgen
 
 from .base import Module
 
@@ -12,9 +12,11 @@ from .. import glob
 from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
+from ..manager import get_manager
 
 # Apps
 ATTESTER = "sgx-attester"
+ROOT_CA_URL = "https://certificates.trustedservices.intel.com/Intel_SGX_Attestation_RootCA.pem"
 
 # SGX build/sign
 SGX_TARGET = "x86_64-fortanix-unknown-sgx"
@@ -36,7 +38,7 @@ class SGXModule(Module):
     sp_lock = asyncio.Lock()
 
     def __init__(self, name, node, priority, deployed, nonce, attested, vendor_key,
-                 ra_settings, features, id, binary, key, sgxs, signature, data,
+                 ra_settings, features, id_, binary, key, sgxs, signature, data,
                  folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sgx-{}".format(folder))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
@@ -51,7 +53,7 @@ class SGXModule(Module):
         self.vendor_key = vendor_key
         self.ra_settings = ra_settings
         self.features = [] if features is None else features
-        self.id = id if id is not None else node.get_module_id()
+        self.id = id_ if id_ is not None else node.get_module_id()
         self.port = port or self.node.reactive_port + self.id
         self.folder = folder
 
@@ -66,7 +68,7 @@ class SGXModule(Module):
         vendor_key = parse_file_name(mod_dict['vendor_key'])
         settings = parse_file_name(mod_dict['ra_settings'])
         features = mod_dict.get('features')
-        id = mod_dict.get('id')
+        id_ = mod_dict.get('id')
         binary = parse_file_name(mod_dict.get('binary'))
         key = parse_key(mod_dict.get('key'))
         sgxs = parse_file_name(mod_dict.get('sgxs'))
@@ -76,7 +78,7 @@ class SGXModule(Module):
         port = mod_dict.get('port')
 
         return SGXModule(name, node, priority, deployed, nonce, attested, vendor_key,
-                         settings, features, id, binary, key, sgxs, signature, data, folder,
+                         settings, features, id_, binary, key, sgxs, signature, data, folder,
                          port)
 
     def dump(self):
@@ -169,7 +171,7 @@ class SGXModule(Module):
         await self.node.deploy(self)
 
     async def attest(self):
-        if glob.get_att_man():
+        if get_manager() is not None:
             await self.__attest_manager()
         else:
             if self.__attest_fut is None:
@@ -180,16 +182,16 @@ class SGXModule(Module):
     async def get_id(self):
         return self.id
 
-    async def get_input_id(self, input):
-        if isinstance(input, int):
-            return input
+    async def get_input_id(self, input_):
+        if isinstance(input_, int):
+            return input_
 
         inputs = await self.inputs
 
-        if input not in inputs:
+        if input_ not in inputs:
             raise Error("Input not present in inputs")
 
-        return inputs[input]
+        return inputs[input_]
 
     async def get_output_id(self, output):
         if isinstance(output, int):
@@ -276,19 +278,16 @@ class SGXModule(Module):
         return await self.__generate_fut
 
     async def __generate_code(self):
-        try:
-            import rustsgxgen
-        except:
-            raise Error("rust-sgx-gen not installed! Check README.md")
-
         args = Object()
+        man = get_manager()
 
         args.input = self.folder
         args.output = self.out_dir
         args.moduleid = self.id
         args.emport = self.node.deploy_port
         args.runner = rustsgxgen.Runner.SGX
-        args.spkey = await self.manager.get_sp_pubkey() if glob.get_att_man() else await self.get_ra_sp_pub_key()
+        args.spkey = await man.get_sp_pubkey() \
+            if man is not None else await self.get_ra_sp_pub_key()
         args.print = None
 
         data, _ = rustsgxgen.generate(args)
@@ -322,7 +321,7 @@ class SGXModule(Module):
         binary = await self.binary
         debug = "--debug" if glob.get_build_mode() == glob.BuildMode.DEBUG else ""
 
-        sgxs = "{}.sgxs".format(binary, self.name)
+        sgxs = "{}.sgxs".format(binary)
 
         # use this format for the file names to deal with multiple SMs built
         # from the same source code, but with different vendor keys
@@ -375,7 +374,7 @@ class SGXModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-sgx --data {}".format(
-            self.manager.config, data_file).split()
+            get_manager().config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
@@ -392,7 +391,7 @@ class SGXModule(Module):
             ias_cert = os.path.join(glob.BUILD_DIR, "ias_root_ca.pem")
 
             # check if already generated in a previous run
-            if all(map(lambda x: os.path.exists(x), [priv, pub, ias_cert])):
+            if all(map(os.path.exists, [priv, pub, ias_cert])):
                 return pub, priv, ias_cert
 
             cmd = "openssl"
@@ -405,7 +404,7 @@ class SGXModule(Module):
             await tools.run_async_shell(cmd, *args_public)
 
             cmd = "curl"
-            url = "https://certificates.trustedservices.intel.com/Intel_SGX_Attestation_RootCA.pem".split()
+            url = ROOT_CA_URL.split()
             await tools.run_async(cmd, *url, output_file=ias_cert)
 
             return pub, priv, ias_cert

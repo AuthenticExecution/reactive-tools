@@ -1,10 +1,11 @@
-import asyncio
 import logging
 import binascii
-import aiofile
 import struct
 
-from reactivenet import *
+from reactivenet import ReactiveCommand, ReactiveEntrypoint, Message, \
+    CommandMessage, CommandMessageLoad
+
+import aiofile
 
 from .base import Node
 from .. import tools
@@ -52,11 +53,11 @@ class TrustZoneNode(Node):
         async with aiofile.AIOFile(await module.binary, "rb") as f:
             file_data = await f.read()
 
-        id = tools.pack_int16(module.id)
+        id_ = tools.pack_int16(module.id)
         uid = module.uuid.to_bytes(16, 'big')
-        size = struct.pack('!I', len(file_data) + len(id) + len(uid))
+        size = struct.pack('!I', len(file_data) + len(id_) + len(uid))
 
-        payload = size + id + uid + file_data
+        payload = size + id_ + uid + file_data
 
         command = CommandMessageLoad(payload,
                                      self.ip_address,

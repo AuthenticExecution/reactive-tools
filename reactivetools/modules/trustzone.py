@@ -1,6 +1,5 @@
 import logging
 import asyncio
-import binascii
 import hashlib
 import json
 import os
@@ -12,6 +11,7 @@ from .. import glob
 from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
+from ..manager import get_manager
 
 
 class Error(Exception):
@@ -27,13 +27,13 @@ BUILD_CMD = "make -C {{}}/{{}} {} {} {} {{}} O={{}}".format(
 
 class TrustZoneModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, files_dir,
-                 binary, id, uuid, key, inputs, outputs, entrypoints):
+                 binary, id_, uuid, key, inputs, outputs, entrypoints):
         self.out_dir = os.path.join(
             glob.BUILD_DIR, "trustzone-{}".format(name))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
         self.files_dir = files_dir
-        self.id = id
+        self.id = id_
         self.uuid = uuid
         self.inputs = inputs
         self.outputs = outputs
@@ -55,14 +55,14 @@ class TrustZoneModule(Module):
         attested = mod_dict.get('attested')
         files_dir = mod_dict.get('files_dir')
         binary = mod_dict.get('binary')
-        id = mod_dict.get('id')
+        id_ = mod_dict.get('id')
         uuid = mod_dict.get('uuid')
         key = parse_key(mod_dict.get('key'))
         inputs = mod_dict.get('inputs')
         outputs = mod_dict.get('outputs')
         entrypoints = mod_dict.get('entrypoints')
         return TrustZoneModule(name, node, priority, deployed, nonce, attested, files_dir,
-                               binary, id, uuid, key, inputs, outputs, entrypoints)
+                               binary, id_, uuid, key, inputs, outputs, entrypoints)
 
     def dump(self):
         return {
@@ -108,7 +108,7 @@ class TrustZoneModule(Module):
         await self.node.deploy(self)
 
     async def attest(self):
-        if glob.get_att_man():
+        if get_manager() is not None:
             await self.__attest_manager()
         else:
             if self.__attest_fut is None:
@@ -120,16 +120,16 @@ class TrustZoneModule(Module):
     async def get_id(self):
         return self.id
 
-    async def get_input_id(self, input):
-        if isinstance(input, int):
-            return input
+    async def get_input_id(self, input_):
+        if isinstance(input_, int):
+            return input_
 
         inputs = self.inputs
 
-        if input not in inputs:
+        if input_ not in inputs:
             raise Error("Input not present in inputs")
 
-        return inputs[input]
+        return inputs[input_]
 
     async def get_output_id(self, output):
         if isinstance(output, int):
@@ -167,9 +167,9 @@ class TrustZoneModule(Module):
      # --- Other methods --- #
 
     async def __build(self):
-        hex = '%032x' % (self.uuid)
+        hexa = '%032x' % (self.uuid)
         self.uuid_for_MK = '%s-%s-%s-%s-%s' % (
-            hex[:8], hex[8:12], hex[12:16], hex[16:20], hex[20:])
+            hexa[:8], hexa[8:12], hexa[12:16], hexa[16:20], hexa[20:])
 
         binary_name = "BINARY=" + self.uuid_for_MK
         cmd = BUILD_CMD.format(self.files_dir, self.name,
@@ -210,7 +210,7 @@ class TrustZoneModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-trustzone --data {}".format(
-            self.manager.config, data_file).split()
+            get_manager().config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import json
+import rustsgxgen
 
 from .base import Module
 
@@ -11,6 +12,7 @@ from .. import glob
 from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
+from ..manager import get_manager
 
 BUILD_APP = "cargo build {} {} --manifest-path={}/Cargo.toml"
 
@@ -25,7 +27,7 @@ class Error(Exception):
 
 class NativeModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, features,
-                 id, binary, key, data, folder, port):
+                 id_, binary, key, data, folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "native-{}".format(folder))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
@@ -33,7 +35,7 @@ class NativeModule(Module):
         self.__build_fut = tools.init_future(binary)
 
         self.features = [] if features is None else features
-        self.id = id if id is not None else node.get_module_id()
+        self.id = id_ if id_ is not None else node.get_module_id()
         self.port = port or self.node.reactive_port + self.id
         self.folder = folder
 
@@ -46,7 +48,7 @@ class NativeModule(Module):
         nonce = mod_dict.get('nonce')
         attested = mod_dict.get('attested')
         features = mod_dict.get('features')
-        id = mod_dict.get('id')
+        id_ = mod_dict.get('id')
         binary = parse_file_name(mod_dict.get('binary'))
         key = parse_key(mod_dict.get('key'))
         data = mod_dict.get('data')
@@ -54,7 +56,7 @@ class NativeModule(Module):
         port = mod_dict.get('port')
 
         return NativeModule(name, node, priority, deployed, nonce, attested,
-                            features, id, binary, key, data, folder, port)
+                            features, id_, binary, key, data, folder, port)
 
     def dump(self):
         return {
@@ -128,7 +130,7 @@ class NativeModule(Module):
         await self.node.deploy(self)
 
     async def attest(self):
-        if glob.get_att_man():
+        if get_manager() is not None:
             await self.__attest_manager()
         else:
             await self.key
@@ -138,16 +140,16 @@ class NativeModule(Module):
     async def get_id(self):
         return self.id
 
-    async def get_input_id(self, input):
-        if isinstance(input, int):
-            return input
+    async def get_input_id(self, input_):
+        if isinstance(input_, int):
+            return input_
 
         inputs = await self.inputs
 
-        if input not in inputs:
+        if input_ not in inputs:
             raise Error("Input not present in inputs")
 
-        return inputs[input]
+        return inputs[input_]
 
     async def get_output_id(self, output):
         if isinstance(output, int):
@@ -215,11 +217,6 @@ class NativeModule(Module):
         return await self.__generate_fut
 
     async def __generate_code(self):
-        try:
-            import rustsgxgen
-        except:
-            raise Error("rust-sgx-gen not installed! Check README.md")
-
         args = Object()
 
         args.input = self.folder
@@ -270,7 +267,7 @@ class NativeModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-native --data {}".format(
-            self.manager.config, data_file).split()
+            get_manager().config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes

@@ -1,10 +1,5 @@
-import base64
-import asyncio
 from enum import IntEnum
 from Crypto.Cipher import AES
-
-from . import tools
-from . import glob
 
 
 class Error(Exception):
@@ -16,15 +11,15 @@ class Encryption(IntEnum):
     SPONGENT = 0x1  # spongent-128
 
     @staticmethod
-    def from_str(str):
-        lower_str = str.lower()
+    def from_str(str_):
+        lower_str = str_.lower()
 
         if lower_str == "aes":
             return Encryption.AES
         if lower_str == "spongent":
             return Encryption.SPONGENT
 
-        raise Error("No matching encryption type for {}".format(str))
+        raise Error("No matching encryption type for {}".format(str_))
 
     def to_str(self):
         if self == Encryption.AES:
@@ -32,11 +27,15 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return "spongent"
 
+        raise Error("to_str not implemented for {}".format(self.name))
+
     def get_key_size(self):
         if self == Encryption.AES:
             return 16
         if self == Encryption.SPONGENT:
             return 16
+
+        raise Error("get_key_size not implemented for {}".format(self.name))
 
     async def encrypt(self, key, ad, data):
         if self == Encryption.AES:
@@ -44,17 +43,23 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return await encrypt_spongent(key, ad, data)
 
+        raise Error("encrypt not implemented for {}".format(self.name))
+
     async def decrypt(self, key, ad, data):
         if self == Encryption.AES:
             return await decrypt_aes(key, ad, data)
         if self == Encryption.SPONGENT:
             return await decrypt_spongent(key, ad, data)
 
+        raise Error("decrypt not implemented for {}".format(self.name))
+
     async def mac(self, key, ad):
         if self == Encryption.AES:
             return await encrypt_aes(key, ad)
         if self == Encryption.SPONGENT:
             return await encrypt_spongent(key, ad)
+
+        raise Error("mac not implemented for {}".format(self.name))
 
 
 async def encrypt_aes(key, ad, data=b''):

@@ -1,11 +1,9 @@
 import logging
 import asyncio
-import binascii
-from enum import Enum
 from collections import namedtuple
 import json
-import yaml
 import os
+import yaml
 
 from elftools.elf import elffile
 
@@ -16,6 +14,7 @@ from .. import glob
 from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
+from ..manager import get_manager
 
 
 class Error(Exception):
@@ -24,7 +23,7 @@ class Error(Exception):
 
 class SancusModule(Module):
     def __init__(self, name, node, priority, deployed, nonce, attested, files,
-                 cflags, ldflags, binary, id, symtab, key):
+                 cflags, ldflags, binary, id_, symtab, key):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
         super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
 
@@ -33,7 +32,7 @@ class SancusModule(Module):
         self.ldflags = ldflags
 
         self.__build_fut = tools.init_future(binary)
-        self.__deploy_fut = tools.init_future(id, symtab)
+        self.__deploy_fut = tools.init_future(id_, symtab)
         self.__key_fut = tools.init_future(key)
         self.__attest_fut = tools.init_future(attested if attested else None)
 
@@ -45,17 +44,16 @@ class SancusModule(Module):
         deployed = mod_dict.get('deployed')
         nonce = mod_dict.get('nonce')
         attested = mod_dict.get('attested')
-        files = load_list(mod_dict['files'],
-                          lambda f: parse_file_name(f))
+        files = load_list(mod_dict['files'], parse_file_name)
         cflags = load_list(mod_dict.get('cflags'))
         ldflags = load_list(mod_dict.get('ldflags'))
         binary = parse_file_name(mod_dict.get('binary'))
-        id = mod_dict.get('id')
+        id_ = mod_dict.get('id')
         symtab = parse_file_name(mod_dict.get('symtab'))
         key = parse_key(mod_dict.get('key'))
 
         return SancusModule(name, node, priority, deployed, nonce, attested,
-                            files, cflags, ldflags, binary, id, symtab, key)
+                            files, cflags, ldflags, binary, id_, symtab, key)
 
     def dump(self):
         return {
@@ -83,8 +81,8 @@ class SancusModule(Module):
 
     @property
     async def id(self):
-        id, _ = await self.deploy()
-        return id
+        id_, _ = await self.deploy()
+        return id_
 
     @property
     async def symtab(self):
@@ -113,7 +111,7 @@ class SancusModule(Module):
         return await self.__deploy_fut
 
     async def attest(self):
-        if glob.get_att_man():
+        if get_manager() is not None:
             await self.__attest_manager()
         else:
             if self.__attest_fut is None:
@@ -125,8 +123,8 @@ class SancusModule(Module):
     async def get_id(self):
         return await self.id
 
-    async def get_input_id(self, input):
-        return await self.get_io_id(input)
+    async def get_input_id(self, input_):
+        return await self.get_io_id(input_)
 
     async def get_output_id(self, output):
         return await self.get_io_id(output)
@@ -181,15 +179,17 @@ class SancusModule(Module):
 
         config = self._get_build_config(tools.get_verbosity())
         objects = {str(p): tools.create_tmp(
-            suffix='.o', dir=self.out_dir) for p in self.files}
+            suffix='.o', dir_name=self.out_dir) for p in self.files}
 
         cflags = config.cflags + self.cflags
-        def build_obj(c, o): return tools.run_async(config.cc, *cflags,
-                                                    '-c', '-o', o, c)
+
+        def build_obj(c, o):
+            return tools.run_async(config.cc, *cflags, '-c', '-o', o, c)
+
         build_futs = [build_obj(c, o) for c, o in objects.items()]
         await asyncio.gather(*build_futs)
 
-        binary = tools.create_tmp(suffix='.elf', dir=self.out_dir)
+        binary = tools.create_tmp(suffix='.elf', dir_name=self.out_dir)
         ldflags = config.ldflags + self.ldflags
 
         # prepare the config file for this SM
@@ -212,7 +212,8 @@ class SancusModule(Module):
                 config = yaml.load(f)
         except:
             # we create a new file with empty config
-            config_file = tools.create_tmp(suffix='.yaml', dir=self.out_dir)
+            config_file = tools.create_tmp(
+                suffix='.yaml', dir_name=self.out_dir)
             config = {self.name: []}
 
             # remove old flag if present, append new one
@@ -243,7 +244,7 @@ class SancusModule(Module):
         return key
 
     async def __link(self):
-        linked_binary = tools.create_tmp(suffix='.elf', dir=self.out_dir)
+        linked_binary = tools.create_tmp(suffix='.elf', dir_name=self.out_dir)
 
         # NOTE: we use '--noinhibit-exec' flag because the linker complains
         #       if the addresses of .bss section are not aligned to 2 bytes
@@ -300,7 +301,7 @@ class SancusModule(Module):
             json.dump(data, f)
 
         args = "--config {} --request attest-sancus --data {}".format(
-            self.manager.config, data_file).split()
+            get_manager().config, data_file).split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes

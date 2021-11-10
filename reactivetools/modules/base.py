@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 import logging
+import sys
 from .. import glob
 
 
@@ -40,247 +41,232 @@ class Module(ABC):
             logging.error("Failed to create build dir for {}".format(name))
             sys.exit(-1)
 
-    """
-    ### Description ###
-    Creates a XXXModule object from a dict
-    This should take all the information declared in the deployment descriptor
-    and store it into the class as attributes.
-
-    ### Parameters ###
-    mod_dict (dict): dictionary containing the definition of the module
-    node_obj (XXXNode): object where the module belongs to
-
-    ### Returns ###
-    An instance of the XXXModule class
-    """
     @staticmethod
     @abstractmethod
     def load(mod_dict, node_obj):
-        pass
+        """
+        ### Description ###
+        Creates a XXXModule object from a dict
+        This should take all the information declared in the deployment descriptor
+        and store it into the class as attributes.
 
-    """
-    ### Description ###
-    Creates a dict from the XXXModule object (opposite procedure wrt. load)
-    This dict, saved in the output deployment descriptor, and serves two purposes:
-    1) to provide the deployer some information (e.g., keys used)
-    2) to give it as an input of subsequent runs of the application
-    Hence, ideally load() and dump() should involve the same attributes
+        ### Parameters ###
+        mod_dict (dict): dictionary containing the definition of the module
+        node_obj (XXXNode): object where the module belongs to
 
-    ### Parameters ###
-    self: Module object
+        ### Returns ###
+        An instance of the XXXModule class
+        """
 
-    ### Returns ###
-    `dict`: description of the object
-    """
     @abstractmethod
     def dump(self):
-        pass
+        """
+        ### Description ###
+        Creates a dict from the XXXModule object (opposite procedure wrt. load)
+        This dict, saved in the output deployment descriptor, and serves two purposes:
+        1) to provide the deployer some information (e.g., keys used)
+        2) to give it as an input of subsequent runs of the application
+        Hence, ideally load() and dump() should involve the same attributes
 
-    """
-    ### Description ###
-    Coroutine. Create the binary file from sources
+        ### Parameters ###
+        self: Module object
 
-    ### Parameters ###
-    self: Module object
+        ### Returns ###
+        `dict`: description of the object
+        """
 
-    ### Returns ###
-    `str`: path of the created binary file
-    """
     @abstractmethod
     async def build(self):
-        pass
+        """
+        ### Description ###
+        Coroutine. Create the binary file from sources
 
-    """
-    ### Description ###
-    Coroutine. Deploy a module to the corrisponding node
+        ### Parameters ###
+        self: Module object
 
-    Note: this coroutine should call the `deploy` coroutine in self.node,
-    making sure that it can happen only once (e.g., using a flag)
+        ### Returns ###
+        `str`: path of the created binary file
+        """
 
-    ### Parameters ###
-    self: Module object
-
-    ### Returns ###
-    """
     @abstractmethod
     async def deploy(self):
-        pass
+        """
+        ### Description ###
+        Coroutine. Deploy a module to the corrisponding node
 
-    """
-    ### Description ###
-    Coroutine. Attest a deployed module
+        Note: this coroutine should call the `deploy` coroutine in self.node,
+        making sure that it can happen only once (e.g., using a flag)
 
-    ### Parameters ###
-    self: Module object
+        ### Parameters ###
+        self: Module object
 
-    ### Returns ###
-    """
+        ### Returns ###
+        """
+
     @abstractmethod
     async def attest(self):
-        pass
+        """
+        ### Description ###
+        Coroutine. Attest a deployed module
 
-    """
-    ### Description ###
-    Coroutine. Get the ID of the module
+        ### Parameters ###
+        self: Module object
 
-    The ID can be assigned in different ways, depending on the architecture.
-    Should be unique on the node where the module is deployed.
+        ### Returns ###
+        """
 
-    ### Parameters ###
-    self: Module object
-
-    ### Returns ###
-    `int`: ID of the module
-    """
     @abstractmethod
     async def get_id(self):
-        pass
+        """
+        ### Description ###
+        Coroutine. Get the ID of the module
 
-    """
-    ### Description ###
-    Coroutine. Get the ID of the input passed as parameter
+        The ID can be assigned in different ways, depending on the architecture.
+        Should be unique on the node where the module is deployed.
 
-    This method should raise an error if the input does not exist
+        ### Parameters ###
+        self: Module object
 
-    ### Parameters ###
-    self: Module object
-    input (str): name of the input
+        ### Returns ###
+        `int`: ID of the module
+        """
 
-    ### Returns ###
-    `int`: ID of the input
-    """
     @abstractmethod
-    async def get_input_id(self, input):
-        pass
+    async def get_input_id(self, input_):
+        """
+        ### Description ###
+        Coroutine. Get the ID of the input passed as parameter
 
-    """
-    ### Description ###
-    Coroutine. Get the ID of the output passed as parameter
+        This method should raise an error if the input does not exist
 
-    This method should raise an error if the output does not exist
+        ### Parameters ###
+        self: Module object
+        input (str): name of the input
 
-    ### Parameters ###
-    self: Module object
-    output (str): name of the output
+        ### Returns ###
+        `int`: ID of the input
+        """
 
-    ### Returns ###
-    `int`: ID of the output
-    """
     @abstractmethod
     async def get_output_id(self, output):
-        pass
+        """
+        ### Description ###
+        Coroutine. Get the ID of the output passed as parameter
 
-    """
-    ### Description ###
-    Coroutine. Get the ID of the entry point passed as parameter
+        This method should raise an error if the output does not exist
 
-    This method should raise an error if the entry point does not exist
+        ### Parameters ###
+        self: Module object
+        output (str): name of the output
 
-    ### Parameters ###
-    self: Module object
-    entry (str): name of the entry point
+        ### Returns ###
+        `int`: ID of the output
+        """
 
-    ### Returns ###
-    `int`: ID of the entry point
-    """
     @abstractmethod
     async def get_entry_id(self, entry):
-        pass
+        """
+        ### Description ###
+        Coroutine. Get the ID of the entry point passed as parameter
 
-    """
-    ### Description ###
-    Coroutine. Get the module's key
+        This method should raise an error if the entry point does not exist
 
-    ### Parameters ###
-    self: Module object
+        ### Parameters ###
+        self: Module object
+        entry (str): name of the entry point
 
-    ### Returns ###
-    `bytes`: byte array of the key
-    """
+        ### Returns ###
+        `int`: ID of the entry point
+        """
+
     @abstractmethod
     async def get_key(self):
-        pass
+        """
+        ### Description ###
+        Coroutine. Get the module's key
 
-    """
-    ### Description ###
-    Static method. Get a list of node classes where the module can be deployed
+        ### Parameters ###
+        self: Module object
 
-    e.g., SancusModule -> [SancusNode]
+        ### Returns ###
+        `bytes`: byte array of the key
+        """
 
-    ### Parameters ###
-
-    ### Returns ###
-    `list`: list of node classes that are supported by the XXXModule instance
-    """
     @staticmethod
     @abstractmethod
     def get_supported_nodes():
-        pass
+        """
+        ### Description ###
+        Static method. Get a list of node classes where the module can be deployed
 
-    """
-    ### Description ###
-    Static method. Get a list of crypto libraries supported by the module
-    The Encryption enum is defined in crypto.py
+        e.g., SancusModule -> [SancusNode]
 
-    e.g., SGXModule -> [Encryption.SPONGENT, Encryption.AES]
+        ### Parameters ###
 
-    ### Parameters ###
+        ### Returns ###
+        `list`: list of node classes that are supported by the XXXModule instance
+        """
 
-    ### Returns ###
-    `list`: list of Encryption objects
-    """
     @staticmethod
     @abstractmethod
     def get_supported_encryption():
-        pass
+        """
+        ### Description ###
+        Static method. Get a list of crypto libraries supported by the module
+        The Encryption enum is defined in crypto.py
 
-    """
-    Default implementation of some functions.
-    Override them in the subclasses if you need a different implementation.
-    """
+        e.g., SGXModule -> [Encryption.SPONGENT, Encryption.AES]
 
-    """
-    ### Description ###
-    Static coroutine. Cleanup operations to do before the application terminates
+        ### Parameters ###
 
-    ### Parameters ###
+        ### Returns ###
+        `list`: list of Encryption objects
+        """
 
-    ### Returns ###
-    """
+    # Default implementation of some functions.
+    # Override them in the subclasses if you need a different implementation.
+
     @staticmethod
     async def cleanup():
-        pass
+        """
+        ### Description ###
+        Static coroutine. Cleanup operations to do before the application terminates.
 
-    """
-    ### Description ###
-    Coroutine. Get the ID of the request passed as parameter
+        ### Parameters ###
 
-    This method should raise an error if the request does not exist
+        ### Returns ###
+        """
 
-    ### Parameters ###
-    self: Module object
-    request (str): name of the request
-
-    ### Returns ###
-    `int`: ID of the request
-    """
     async def get_request_id(self, request):
+        """
+        ### Description ###
+        Coroutine. Get the ID of the request passed as parameter
+
+        This method should raise an error if the request does not exist
+
+        ### Parameters ###
+        self: Module object
+        request (str): name of the request
+
+        ### Returns ###
+        `int`: ID of the request
+        """
         raise Error("Request/handler messages not supported for {}".format(
-            self.__class__.name))
+            self.__class__.__name__))
 
-    """
-    ### Description ###
-    Coroutine. Get the ID of the handler passed as parameter
-
-    This method should raise an error if the handler does not exist
-
-    ### Parameters ###
-    self: Module object
-    handler (str): name of the handler
-
-    ### Returns ###
-    `int`: ID of the handler
-    """
     async def get_handler_id(self, handler):
+        """
+        ### Description ###
+        Coroutine. Get the ID of the handler passed as parameter
+
+        This method should raise an error if the handler does not exist
+
+        ### Parameters ###
+        self: Module object
+        handler (str): name of the handler
+
+        ### Returns ###
+        `int`: ID of the handler
+        """
         raise Error("Request/handler messages not supported for {}".format(
-            self.__class__.name))
+            self.__class__.__name__))

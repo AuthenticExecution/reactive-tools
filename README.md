@@ -1,6 +1,8 @@
 # reactive-tools
 
-Deployment tools for the [Authentic Execution framework](https://github.com/gianlu33/authentic-execution)
+Deployment tools for the [Authentic Execution framework](https://github.com/AuthenticExecution)
+
+Quick hands-on: check out our [examples](https://github.com/AuthenticExecution/examples).
 
 ## Support
 
@@ -18,11 +20,11 @@ Currently, the following architectures are supported:
 ### Limitations
 
 - Currently, SGX modules can only be deployed in debug mode
-- Trustzone support is experimental, it works on QEMU v7 only, on our custom [optee_os](https://github.com/gianlu33/optee_os/tree/authentic-execution) and [event manager](https://github.com/sepidehpouyan/Authentic-Execution/tree/master/Event) (which should run on the normal world)
+- Trustzone support is experimental, it works on QEMU v7 only, on our custom [optee_os](https://github.com/AuthenticExecution/optee_os) and untrusted [event manager](https://github.com/AuthenticExecution/event_manager_trustzone)
 
 ## Dependencies & installation
 
-- [Full list of dependencies](https://github.com/gianlu33/authentic-execution/blob/master/docs/install-from-sources.md)
+Check the [reactive-base](https://github.com/AuthenticExecution/reactive-base) repository for more info about the dependencies needed for each TEE.
 
 ```bash
 # Install reactive-tools - you must be at the root of this repository
@@ -31,7 +33,7 @@ pip install .
 
 ## Run reactive-tools with Docker
 
-The [gianlu33/reactive-tools](https://hub.docker.com/repository/docker/gianlu33/reactive-tools) Docker images provide a simple and fast way to run reactive-tools from any Linux-based OS.
+The [authexec/reactive-tools](https://hub.docker.com/repository/docker/authexec/reactive-tools) Docker image provide a simple and fast way to run reactive-tools from any Linux-based OS.
 
 - the `latest` image contains all the dependencies/toolchains to build and deploy modules (sgx, native, sancus, trustzone), plus some other utilities. It is *not* optimized, therefore it is not really lightweight but it contains everything is needed.
 

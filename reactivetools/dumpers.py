@@ -37,5 +37,5 @@ def _(coro):
 
 
 @dump.register(dict)
-def _(dict):
-    return dict
+def _(dict_):
+    return dict_

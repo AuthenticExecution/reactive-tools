@@ -2,7 +2,6 @@ import logging
 import tempfile
 import os
 import asyncio
-import base64
 import struct
 from enum import Enum
 import socket
@@ -13,6 +12,7 @@ from . import glob
 
 class ProcessRunError(Exception):
     def __init__(self, args, result):
+        super().__init__()
         self.args = args
         self.result = result
 
@@ -33,17 +33,16 @@ def get_verbosity():
 
     if log_at(logging.DEBUG):
         return Verbosity.Debug
-    elif log_at(logging.INFO):
+    if log_at(logging.INFO):
         return Verbosity.Verbose
-    else:
-        return Verbosity.Normal
+    return Verbosity.Normal
 
 
 def get_stderr():
     if get_verbosity() == Verbosity.Debug:
         return None
-    else:
-        return open(os.devnull, "wb")
+
+    return open(os.devnull, "wb")
 
 
 def init_future(*results):
@@ -56,10 +55,11 @@ def init_future(*results):
     return fut
 
 
-async def run_async(*args, output_file=os.devnull, env=None):
+async def run_async(program, *args, output_file=os.devnull, env=None):
     logging.debug(' '.join(args))
 
-    process = await asyncio.create_subprocess_exec(*args,
+    process = await asyncio.create_subprocess_exec(program,
+                                                   *args,
                                                    stdout=open(
                                                        output_file, 'wb'),
                                                    stderr=get_stderr(),
@@ -70,9 +70,10 @@ async def run_async(*args, output_file=os.devnull, env=None):
         raise ProcessRunError(args, result)
 
 
-async def run_async_background(*args, env=None):
+async def run_async_background(program, *args, env=None):
     logging.debug(' '.join(args))
-    process = await asyncio.create_subprocess_exec(*args,
+    process = await asyncio.create_subprocess_exec(program,
+                                                   *args,
                                                    stdout=open(
                                                        os.devnull, 'wb'),
                                                    stderr=get_stderr(),
@@ -81,10 +82,11 @@ async def run_async_background(*args, env=None):
     return process
 
 
-async def run_async_output(*args, env=None):
+async def run_async_output(program, *args, env=None):
     cmd = ' '.join(args)
     logging.debug(cmd)
-    process = await asyncio.create_subprocess_exec(*args,
+    process = await asyncio.create_subprocess_exec(program,
+                                                   *args,
                                                    stdout=asyncio.subprocess.PIPE,
                                                    stderr=asyncio.subprocess.PIPE,
                                                    env=env)
@@ -129,9 +131,9 @@ def resolve_ip(host):
     raise Error("Invalid host: {}".format(host))
 
 
-def create_tmp(suffix='', dir=''):
-    dir = os.path.join(glob.BUILD_DIR, dir)
-    fd, path = tempfile.mkstemp(suffix=suffix, dir=dir)
+def create_tmp(suffix='', dir_name=''):
+    dir_ = os.path.join(glob.BUILD_DIR, dir_name)
+    fd, path = tempfile.mkstemp(suffix=suffix, dir=dir_)
     os.close(fd)
     return path
 

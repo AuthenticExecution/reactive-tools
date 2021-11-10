@@ -4,10 +4,8 @@ import asyncio
 import sys
 import binascii
 import os
-import contextlib
 
 from . import config
-from . import tools
 from . import glob
 
 
@@ -76,13 +74,13 @@ def _parse_args(args):
         default=None)
     deploy_parser.add_argument(
         '--module',
-        help='Module to deploy (if not specified, deploy all modules not yet deployed)',
+        help='Module to deploy (if not specified, deploy all modules)',
         default=None)
 
     # build
     build_parser = subparsers.add_parser(
         'build',
-        help='Build the executables of the SMs as declared in the input configuration file (for debugging)')
+        help='Build the executables of the SMs as declared in the input configuration file')
     build_parser.set_defaults(command_handler=_handle_build)
     build_parser.add_argument(
         '--mode',
@@ -118,7 +116,7 @@ def _parse_args(args):
         default=None)
     attest_parser.add_argument(
         '--module',
-        help='Module to attest (if not specified, attest all modules not yet attested)',
+        help='Module to attest (if not specified, attest all modules)',
         default=None)
 
     # connect
@@ -138,7 +136,7 @@ def _parse_args(args):
         default=None)
     connect_parser.add_argument(
         '--connection',
-        help='Connection to establish (if not specified, establish all connections not yet established)',
+        help='Connection to establish (if unspecified, establish all connections)',
         default=None)
 
     # register
@@ -158,7 +156,7 @@ def _parse_args(args):
         default=None)
     register_parser.add_argument(
         '--event',
-        help='Event to register (if not specified, register all events not yet registered)',
+        help='Event to register (if not specified, register all events)',
         default=None)
 
     # call
@@ -366,7 +364,6 @@ def _handle_request(args):
 def main(raw_args=None):
     args = _parse_args(raw_args)
     _setup_logging(args)
-    glob.set_att_man(args.manager)
 
     # create working directory
     try:

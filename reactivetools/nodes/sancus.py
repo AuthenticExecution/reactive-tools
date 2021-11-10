@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import binascii
-import aiofile
 from enum import IntEnum
 
-from reactivenet import *
+from reactivenet import ReactiveCommand, ReactiveEntrypoint, Message, \
+    CommandMessage
+
+import aiofile
 
 from .base import Node
 from .. import tools
@@ -85,7 +87,7 @@ class SancusNode(Node):
                         .format(module.name, self.name))
 
         symtab = res.message.payload[2:]
-        symtab_file = tools.create_tmp(suffix='.ld', dir=module.out_dir)
+        symtab_file = tools.create_tmp(suffix='.ld', dir_name=module.out_dir)
 
         # aiofile for write operations is bugged (version 3.3.3)
         # I get a "bad file descriptor" error after writes.

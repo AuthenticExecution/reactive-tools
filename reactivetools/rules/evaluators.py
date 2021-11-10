@@ -1,16 +1,15 @@
-import yaml
 import os
 import logging
 
 from ..descriptor import DescriptorType
 
 
-def is_present(dict, key):
-    return key in dict and dict[key] is not None
+def is_present(dict_, key):
+    return key in dict_ and dict_[key] is not None
 
 
-def has_value(dict, key, value):
-    return is_present(dict, key) and dict[key] == value
+def has_value(dict_, key, value):
+    return is_present(dict_, key) and dict_[key] == value
 
 
 def is_positive_number(val, bits=16):
@@ -23,8 +22,8 @@ def is_positive_number(val, bits=16):
     return True
 
 
-def authorized_keys(dict, keys):
-    for key in dict:
+def authorized_keys(dict_, keys):
+    for key in dict_:
         if key not in keys:
             return False
 

@@ -1,5 +1,3 @@
-import binascii
-import ipaddress
 import os
 import asyncio
 import logging
@@ -7,14 +5,12 @@ import logging
 from .modules import Module
 from .nodes import Node
 from .connection import Connection
-from .crypto import Encryption
 from .periodic_event import PeriodicEvent
-from . import tools
 from .dumpers import *
 from .loaders import *
 from .rules.evaluators import *
 from .descriptor import DescriptorType
-from .manager import Manager
+from .manager import Manager, set_manager, get_manager
 
 from .nodes import node_rules, node_funcs, node_cleanup_coros
 from .modules import module_rules, module_funcs, module_cleanup_coros
@@ -32,7 +28,6 @@ class Config:
         self.connections_current_id = 0
         self.events_current_id = 0
         self.output_type = None
-        self.manager = None
 
     def get_node(self, name):
         for n in self.nodes:
@@ -48,12 +43,12 @@ class Config:
 
         raise Error('No module with name {}'.format(name))
 
-    def get_connection_by_id(self, id):
+    def get_connection_by_id(self, id_):
         for c in self.connections:
-            if c.id == id:
+            if c.id == id_:
                 return c
 
-        raise Error('No connection with ID {}'.format(id))
+        raise Error('No connection with ID {}'.format(id_))
 
     def get_connection_by_name(self, name):
         for c in self.connections:
@@ -95,14 +90,18 @@ class Config:
 
         # If deployment in order is desired, deploy one module at a time
         if in_order:
-            for module in self.modules:
-                if not module.deployed:
-                    await module.deploy()
+            for m in self.modules:
+                if not m.deployed:
+                    await m.deploy()
         # Otherwise, deploy all modules concurrently
         else:
             lst = self.modules
-            def l_filter(x): return not x.deployed
-            def l_map(x): return x.deploy()
+
+            def l_filter(x):
+                return not x.deployed
+
+            def l_map(x):
+                return x.deploy()
 
             futures = map(l_map, filter(l_filter, lst))
             await asyncio.gather(*futures)
@@ -192,7 +191,7 @@ def load(file_name, output_type=None):
     config.output_type = desc_type or input_type
 
     if 'manager' in contents:
-        config.manager = _load_manager(contents['manager'], config)
+        _load_manager(contents['manager'], config)
 
     config.nodes = load_list(contents['nodes'],
                              lambda n: _load_node(n, config))
@@ -217,7 +216,7 @@ def load(file_name, output_type=None):
     return config
 
 
-def _load_node(node_dict, config):
+def _load_node(node_dict, _):
     # Basic rules common to all nodes
     evaluate_rules(os.path.join("default", "node.yaml"), node_dict)
     # Specific rules for a specific node type
@@ -242,8 +241,6 @@ def _load_module(mod_dict, config):
             node.name, node.__class__.__name__,
             module.name, module.__class__.__name__))
 
-    module.manager = config.manager
-
     return module
 
 
@@ -259,14 +256,15 @@ def _load_periodic_event(events_dict, config):
 
 def _load_manager(man_file, config):
     if man_file is None:
-        return None
+        return
 
     man_dict, _ = DescriptorType.load_any(man_file)
     evaluate_rules(os.path.join("default", "manager.yaml"), man_dict)
-    return Manager.load(man_file, man_dict, config)
+    man = Manager.load(man_file, man_dict, config)
+    set_manager(man)
 
 
-def evaluate_rules(rules_file, dict):
+def evaluate_rules(rules_file, dict_):
     rules = load_rules(rules_file)
 
     ok = True
@@ -291,9 +289,9 @@ def dump_config(config, file_name):
 
 @dump.register(Config)
 def _(config):
-    dump(config.nodes)
+    man = get_manager()
     return {
-        'manager': dump(config.manager) if config.manager is not None else None,
+        'manager': dump(man) if man is not None else None,
         'nodes': dump(config.nodes),
         'modules': dump(config.modules),
         'connections_current_id': config.connections_current_id,
