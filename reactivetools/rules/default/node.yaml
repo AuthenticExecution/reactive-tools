@@ -2,31 +2,31 @@
 
 ## required keys ##
 type required:
-  is_present(dict, "type")
+  is_present(dict_, "type")
 
 name required:
-  is_present(dict, "type")
+  is_present(dict_, "type")
 
 ip_address required:
-  is_present(dict, "ip_address")
+  is_present(dict_, "ip_address")
 
 reactive_port required:
-  is_present(dict, "reactive_port")
+  is_present(dict_, "reactive_port")
 
 
 ## type of the required values ##
 type must be a str:
-  isinstance(dict["type"], str)
+  isinstance(dict_["type"], str)
 
 name must be a str:
-  isinstance(dict["name"], str)
+  isinstance(dict_["name"], str)
 
 ip_address must be a str:
-  isinstance(dict["ip_address"], str)
+  isinstance(dict_["ip_address"], str)
 
 reactive_port must be a positive u16:
-  is_positive_number(dict["reactive_port"])
+  is_positive_number(dict_["reactive_port"])
 
 deploy_port must be a positive u16:
-    not is_present(dict, "deploy_port") or
-    (is_present(dict, "deploy_port") and is_positive_number(dict["deploy_port"]))
+    not is_present(dict_, "deploy_port") or
+    (is_present(dict_, "deploy_port") and is_positive_number(dict_["deploy_port"]))

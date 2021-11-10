@@ -238,7 +238,7 @@ def _handle_deploy(args):
     glob.set_build_mode(args.mode)
 
     os.chdir(args.workspace)
-    conf = config.load(args.config, args.output)
+    conf = config.load(args.config, args.manager, args.output)
 
     conf.deploy(args.deploy_in_order, args.module)
 
@@ -254,7 +254,7 @@ def _handle_build(args):
     glob.set_build_mode(args.mode)
 
     os.chdir(args.workspace)
-    conf = config.load(args.config)
+    conf = config.load(args.config, args.manager)
 
     conf.build(args.module)
     conf.cleanup()
@@ -263,7 +263,7 @@ def _handle_build(args):
 def _handle_attest(args):
     logging.info('Attesting modules')
 
-    conf = config.load(args.config, args.output)
+    conf = config.load(args.config, args.manager, args.output)
 
     conf.attest(args.module)
 
@@ -276,7 +276,7 @@ def _handle_attest(args):
 def _handle_connect(args):
     logging.info('Connecting modules')
 
-    conf = config.load(args.config, args.output)
+    conf = config.load(args.config, args.manager, args.output)
 
     conf.connect(args.connection)
 
@@ -289,7 +289,7 @@ def _handle_connect(args):
 def _handle_register(args):
     logging.info('Registering periodic events')
 
-    conf = config.load(args.config, args.output)
+    conf = config.load(args.config, args.manager, args.output)
 
     conf.register_event(args.event)
 
@@ -302,7 +302,7 @@ def _handle_register(args):
 def _handle_call(args):
     logging.info('Calling %s:%s', args.module, args.entry)
 
-    conf = config.load(args.config)
+    conf = config.load(args.config, args.manager)
     module = conf.get_module(args.module)
 
     asyncio.get_event_loop().run_until_complete(
@@ -314,7 +314,7 @@ def _handle_call(args):
 def _handle_output(args):
     logging.info('Triggering output of connection %s', args.connection)
 
-    conf = config.load(args.config)
+    conf = config.load(args.config, args.manager)
 
     if args.connection.isnumeric():
         conn = conf.get_connection_by_id(int(args.connection))
@@ -339,7 +339,7 @@ def _handle_output(args):
 def _handle_request(args):
     logging.info('Triggering request of connection %s', args.connection)
 
-    conf = config.load(args.config)
+    conf = config.load(args.config, args.manager)
 
     if args.connection.isnumeric():
         conn = conf.get_connection_by_id(int(args.connection))

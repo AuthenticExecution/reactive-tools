@@ -2,39 +2,39 @@
 
 ## required keys ##
 type required:
-  is_present(dict, "type")
+  is_present(dict_, "type")
 
 name required:
-  is_present(dict, "type")
+  is_present(dict_, "type")
 
 node required:
-  is_present(dict, "node")
+  is_present(dict_, "node")
 
 
 ## type of the required values ##
 type must be a str:
-  isinstance(dict["type"], str)
+  isinstance(dict_["type"], str)
 
 name must be a str:
-  isinstance(dict["name"], str)
+  isinstance(dict_["name"], str)
 
 node must be a str:
-  isinstance(dict["node"], str)
+  isinstance(dict_["node"], str)
 
 priority must be an int:
-  not is_present(dict, "priority") or
-  (is_present(dict, "priority") and isinstance(dict["priority"], int))
+  not is_present(dict_, "priority") or
+  (is_present(dict_, "priority") and isinstance(dict_["priority"], int))
 
 nonce must be an int:
-  not is_present(dict, "nonce") or
-  (is_present(dict, "nonce") and isinstance(dict["nonce"], int))
+  not is_present(dict_, "nonce") or
+  (is_present(dict_, "nonce") and isinstance(dict_["nonce"], int))
 
 deployed must be a bool:
-    not is_present(dict, "deployed") or
-    (is_present(dict, "deployed") and isinstance(dict["deployed"], bool))
+    not is_present(dict_, "deployed") or
+    (is_present(dict_, "deployed") and isinstance(dict_["deployed"], bool))
 
 attested must be a bool:
-    not is_present(dict, "attested") or
-    (is_present(dict, "attested") and isinstance(dict["attested"], bool))
+    not is_present(dict_, "attested") or
+    (is_present(dict_, "attested") and isinstance(dict_["attested"], bool))
 
 ## Other constraints ##

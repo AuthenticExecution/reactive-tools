@@ -2,25 +2,25 @@
 
 ## required keys ##
 module required:
-  is_present(dict, "module")
+  is_present(dict_, "module")
 
 entry required:
-  is_present(dict, "entry")
+  is_present(dict_, "entry")
 
 frequency required:
-  is_present(dict, "frequency")
+  is_present(dict_, "frequency")
 
 
 ## type of the required values ##
 module must be a str:
-  isinstance(dict["module"], str)
+  isinstance(dict_["module"], str)
 
 entry must be a str:
-  isinstance(dict["entry"], str)
+  isinstance(dict_["entry"], str)
 
 frequency must be a positive u32:
-  is_positive_number(dict["frequency"], bits=32)
+  is_positive_number(dict_["frequency"], bits=32)
 
 established must be a bool:
-    not is_present(dict, "established") or
-    (is_present(dict, "established") and isinstance(dict["established"], bool))
+    not is_present(dict_, "established") or
+    (is_present(dict_, "established") and isinstance(dict_["established"], bool))

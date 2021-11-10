@@ -179,7 +179,7 @@ class Config:
         asyncio.get_event_loop().run_until_complete(self.cleanup_async())
 
 
-def load(file_name, output_type=None):
+def load(file_name, manager, output_type=None):
     config = Config()
     desc_type = DescriptorType.from_str(output_type)
 
@@ -190,7 +190,7 @@ def load(file_name, output_type=None):
     #   - the same type of the input file otherwise
     config.output_type = desc_type or input_type
 
-    if 'manager' in contents:
+    if manager:
         _load_manager(contents['manager'], config)
 
     config.nodes = load_list(contents['nodes'],
@@ -256,7 +256,7 @@ def _load_periodic_event(events_dict, config):
 
 def _load_manager(man_file, config):
     if man_file is None:
-        return
+        raise Error("Error while parsing manager information")
 
     man_dict, _ = DescriptorType.load_any(man_file)
     evaluate_rules(os.path.join("default", "manager.yaml"), man_dict)

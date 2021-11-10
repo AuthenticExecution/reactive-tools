@@ -11,14 +11,15 @@ from . import glob
 
 
 class ProcessRunError(Exception):
-    def __init__(self, args, result):
+    def __init__(self, cmd, args, result):
         super().__init__()
+        self.cmd = cmd
         self.args = args
         self.result = result
 
     def __str__(self):
-        return 'Command "{}" exited with code {}' \
-            .format(' '.join(self.args), self.result)
+        return 'Command "{} {}" exited with code {}' \
+            .format(self.cmd, ' '.join(self.args), self.result)
 
 
 class Error(Exception):
@@ -67,7 +68,7 @@ async def run_async(program, *args, output_file=os.devnull, env=None):
     result = await process.wait()
 
     if result != 0:
-        raise ProcessRunError(args, result)
+        raise ProcessRunError(program, args, result)
 
 
 async def run_async_background(program, *args, env=None):
@@ -94,7 +95,7 @@ async def run_async_output(program, *args, env=None):
     result = await process.wait()
 
     if result != 0:
-        raise ProcessRunError(args, result)
+        raise ProcessRunError(program, args, result)
 
     return out, err
 
@@ -110,7 +111,7 @@ async def run_async_shell(*args, env=None):
     result = await process.wait()
 
     if result != 0:
-        raise ProcessRunError(args, result)
+        raise ProcessRunError("", args, result)
 
 
 def resolve_ip(host):

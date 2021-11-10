@@ -55,9 +55,7 @@ class DescriptorType(IntEnum):
         with open(file, 'w') as f:
             if self == DescriptorType.JSON:
                 json.dump(data, f, indent=4)
-
-            if self == DescriptorType.YAML:
+            elif self == DescriptorType.YAML:
                 yaml.dump(data, f)
-
-            raise Error(
-                "dump not implemented for {}".format(self.name))
+            else:
+                raise Error("dump not implemented for {}".format(self.name))

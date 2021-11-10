@@ -2,21 +2,21 @@
 
 ## required keys ##
 host required:
-  is_present(dict, "host")
+  is_present(dict_, "host")
 
 port required:
-  is_present(dict, "port")
+  is_present(dict_, "port")
 
 key required:
-  is_present(dict, "key")
+  is_present(dict_, "key")
 
 
 ## type of the required values ##
 host must be a str:
-  isinstance(dict["host"], str)
+  isinstance(dict_["host"], str)
 
 port must be a positive u16:
-  is_positive_number(dict["port"])
+  is_positive_number(dict_["port"])
 
 key must be a list:
-  isinstance(dict["key"], list)
+  isinstance(dict_["key"], list)
