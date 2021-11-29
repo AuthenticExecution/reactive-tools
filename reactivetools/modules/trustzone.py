@@ -53,7 +53,7 @@ class TrustZoneModule(Module):
         deployed = mod_dict.get('deployed')
         nonce = mod_dict.get('nonce')
         attested = mod_dict.get('attested')
-        files_dir = mod_dict.get('files_dir')
+        files_dir = mod_dict.get('files_dir', ".")
         binary = mod_dict.get('binary')
         id_ = mod_dict.get('id')
         uuid = mod_dict.get('uuid')
