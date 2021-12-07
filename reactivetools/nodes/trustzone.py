@@ -19,10 +19,11 @@ class Error(Exception):
 
 
 class TrustZoneNode(Node):
-    def __init__(self, name, ip_address, reactive_port, deploy_port, node_key):
+    def __init__(self, name, ip_address, reactive_port, deploy_port, node_key, module_id):
         super().__init__(name, ip_address, reactive_port, deploy_port, need_lock=False)
 
         self.node_key = node_key
+        self._moduleid = module_id if module_id else 1
 
     @staticmethod
     def load(node_dict):
@@ -31,8 +32,9 @@ class TrustZoneNode(Node):
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
         node_key = parse_key(node_dict['node_key'])
+        module_id = node_dict.get('module_id')
 
-        return TrustZoneNode(name, ip_address, reactive_port, deploy_port, node_key)
+        return TrustZoneNode(name, ip_address, reactive_port, deploy_port, node_key, module_id)
 
     def dump(self):
         return {
@@ -41,7 +43,8 @@ class TrustZoneNode(Node):
             "ip_address": str(self.ip_address),
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
-            "node_key": dump(self.node_key)
+            "node_key": dump(self.node_key),
+            "module_id": self._moduleid
         }
 
     async def deploy(self, module):
@@ -53,8 +56,9 @@ class TrustZoneNode(Node):
         async with aiofile.AIOFile(await module.binary, "rb") as f:
             file_data = await f.read()
 
+        temp = await module.uUID
         id_ = tools.pack_int16(module.id)
-        uid = module.uuid.to_bytes(16, 'big')
+        uid = temp.to_bytes(16, 'big')
         size = struct.pack('!I', len(file_data) + len(id_) + len(uid))
 
         payload = size + id_ + uid + file_data
@@ -109,9 +113,6 @@ class TrustZoneNode(Node):
         assert module.node is self
         assert encryption in module.get_supported_encryption()
 
-        module_id = await module.get_id()
-        module_key = await module.get_key()
-
         io_id = await conn_io.get_index(module)
         nonce = module.nonce
         module.nonce += 1
@@ -121,12 +122,12 @@ class TrustZoneNode(Node):
             tools.pack_int16(io_id) + \
             tools.pack_int16(nonce)
 
-        cipher = await encryption.AES.encrypt(module_key, ad, key)
+        cipher = await encryption.AES.encrypt(await module.get_key(), ad, key)
 
-        payload = tools.pack_int16(module_id) + \
+        payload = tools.pack_int16(module.id) + \
             tools.pack_int16(ReactiveEntrypoint.SetKey) + \
             ad + \
-            cipher
+            cipher 
 
         command = CommandMessage(ReactiveCommand.Call,
                                  Message(payload),
@@ -139,3 +140,9 @@ class TrustZoneNode(Node):
                 conn_id, module.name, conn_io.name, self.name,
                 binascii.hexlify(key).decode('ascii'))
         )
+
+    def get_module_id(self):
+        id_ = self._moduleid
+        self._moduleid += 1
+
+        return id_
