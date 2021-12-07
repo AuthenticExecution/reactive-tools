@@ -3,7 +3,6 @@ import asyncio
 import hashlib
 import json
 import os
-import uuid
 import tzcodegen
 
 from .base import Module
@@ -19,8 +18,10 @@ from ..manager import get_manager
 class Error(Exception):
     pass
 
+
 class Object():
     pass
+
 
 COMPILER = "CROSS_COMPILE=arm-linux-gnueabihf-"
 PLATFORM = "PLATFORM=vexpress-qemu_virt"
@@ -38,10 +39,10 @@ class TrustZoneModule(Module):
 
         self.id = id_ if id_ is not None else node.get_module_id()
         self.folder = folder
-    
+
         self.uuid_for_MK = ""
 
-        self.__generate_fut = tools.init_future(data , uUID)
+        self.__generate_fut = tools.init_future(data, uUID)
         self.__build_fut = tools.init_future(binary)
         self.__key_fut = tools.init_future(key)
         self.__attest_fut = tools.init_future(attested if attested else None)
@@ -62,7 +63,7 @@ class TrustZoneModule(Module):
         folder = mod_dict.get('folder') or name
         return TrustZoneModule(name, node, priority, deployed, nonce, attested,
                                binary, id_, uUID, key, data, folder)
-    
+
     def dump(self):
         return {
             "type": "trustzone",
@@ -79,12 +80,12 @@ class TrustZoneModule(Module):
             "data": dump(self.data) if self.deployed else None,
             "folder": self.folder
         }
-    
+
     # --- Properties --- #
-    
+
     @property
     async def uUID(self):
-        _,uUID = await self.generate_code()
+        _, uUID = await self.generate_code()
         return uUID
 
     @property
@@ -163,7 +164,7 @@ class TrustZoneModule(Module):
             raise Error("Output not present in outputs")
 
         return outputs[output]
-    
+
     async def get_entry_id(self, entry):
         if entry.isnumeric():
             return int(entry)
@@ -198,18 +199,18 @@ class TrustZoneModule(Module):
 
         args.input = self.folder
         args.output = self.out_dir
-        
+
         args.print = None
 
         data, uUID = tzcodegen.generate(args)
         logging.info("Generated code for module {}".format(self.name))
-        
+
         return data, uUID
 
     async def __build(self):
         await self.generate_code()
 
-        temp =  await self.uUID
+        temp = await self.uUID
 
         hexa = '%032x' % (temp)
         self.uuid_for_MK = '%s-%s-%s-%s-%s' % (
@@ -224,7 +225,7 @@ class TrustZoneModule(Module):
         binary = "{}/{}.ta".format(self.out_dir, self.uuid_for_MK)
 
         return binary
- 
+
     async def __calculate_key(self):
         binary = await self.binary
         node_key = self.node.node_key

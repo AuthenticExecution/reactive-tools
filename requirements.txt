@@ -4,3 +4,4 @@ pycryptodome==3.10.1
 PyYAML==5.4.1
 reactive-net
 rust-sgx-gen
+tz-codegen

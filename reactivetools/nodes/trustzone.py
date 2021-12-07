@@ -127,7 +127,7 @@ class TrustZoneNode(Node):
         payload = tools.pack_int16(module.id) + \
             tools.pack_int16(ReactiveEntrypoint.SetKey) + \
             ad + \
-            cipher 
+            cipher
 
         command = CommandMessage(ReactiveCommand.Call,
                                  Message(payload),
