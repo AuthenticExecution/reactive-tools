@@ -288,7 +288,8 @@ class Node(ABC):
 
         resp_encrypted = response.message.payload
         plaintext = await connection.encryption.decrypt(connection.key,
-                                                        tools.pack_int16(connection.nonce + 1),
+                                                        tools.pack_int16(
+                                                            connection.nonce + 1),
                                                         resp_encrypted)
 
         if output is None:
