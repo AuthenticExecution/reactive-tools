@@ -217,7 +217,6 @@ class TrustZoneModule(Module):
             hexa[:8], hexa[8:12], hexa[12:16], hexa[16:20], hexa[20:])
 
         binary_name = "BINARY=" + self.uuid_for_MK
-        #cmd = BUILD_CMD.format(self.files_dir, self.name, binary_name, self.out_dir)
         cmd = BUILD_CMD.format(self.out_dir, binary_name, self.out_dir)
 
         await tools.run_async_shell(cmd)
