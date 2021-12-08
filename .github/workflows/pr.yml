@@ -16,12 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     -
-      name: Checkout repository
+      uses: actions/checkout@master
+    -
+      name: Build image
+      run: |
+        docker build -t ${{ env.ADMIN_IMAGE }} .
+    -
+      name: Checkout examples
       run: git clone https://github.com/AuthenticExecution/examples.git
     -
       name: Pull images
       run: |
-        docker pull ${{ env.ADMIN_IMAGE }}
         ### Uncomment lines below if other Docker images are needed ###
         #docker pull ${{ env.SGX_IMAGE }}
         #docker pull ${{ env.MANAGER_IMAGE }}:native

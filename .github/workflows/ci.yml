@@ -25,6 +25,7 @@ jobs:
     -
       name: Build
       id: build
+      if: ${{ github.event_name != 'pull_request' }}
       uses: gianlu33/Publish-Docker-Github-Action@main
       with:
         name: authexec/reactive-tools
