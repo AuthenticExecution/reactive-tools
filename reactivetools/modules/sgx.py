@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import json
 import rustsgxgen
 
 from .base import Module
@@ -13,6 +12,7 @@ from ..crypto import Encryption
 from ..dumpers import *
 from ..loaders import *
 from ..manager import get_manager
+from ..descriptor import DescriptorType
 
 # Apps
 ATTESTER = "sgx-attester"
@@ -338,17 +338,21 @@ class SGXModule(Module):
         return sgxs, sig
 
     async def __attest(self):
-        env = {}
-        env["SP_PRIVKEY"] = await self.get_ra_sp_priv_key()
-        env["IAS_CERT"] = await self.get_ias_root_certificate()
-        env["ENCLAVE_SETTINGS"] = self.ra_settings
-        env["ENCLAVE_SIG"] = await self.sig
-        env["ENCLAVE_HOST"] = str(self.node.ip_address)
-        env["ENCLAVE_PORT"] = str(self.port)
-        env["AESM_HOST"] = str(self.node.aesm_host)
-        env["AESM_PORT"] = str(self.node.aesm_port)
+        input_arg = {}
+        input_arg["sp_privkey"] = await self.get_ra_sp_priv_key()
+        input_arg["ias_cert"] = await self.get_ias_root_certificate()
+        input_arg["enclave_settings"] = self.ra_settings
+        input_arg["enclave_sig"] = await self.sig
+        input_arg["enclave_host"] = str(self.node.ip_address)
+        input_arg["enclave_port"] = str(self.port)
+        input_arg["aesm_host"] = str(self.node.aesm_host)
+        input_arg["aesm_port"] = str(self.node.aesm_port)
 
-        out, _ = await tools.run_async_output(ATTESTER, env=env)
+        input_file = tools.create_tmp(".yaml")
+        DescriptorType.YAML.dump(input_file, input_arg)
+
+        args = [input_file]
+        out, _ = await tools.run_async_output(ATTESTER, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
 
@@ -370,8 +374,7 @@ class SGXModule(Module):
             "config": self.ra_settings
         }
         data_file = tools.create_tmp(suffix=".json")
-        with open(data_file, "w") as f:
-            json.dump(data, f)
+        DescriptorType.JSON.dump(data_file, data)
 
         args = "--config {} --request attest-sgx --data {}".format(
             get_manager().config, data_file).split()
