@@ -344,9 +344,9 @@ class SGXModule(Module):
         input_arg["enclave_settings"] = self.ra_settings
         input_arg["enclave_sig"] = await self.sig
         input_arg["enclave_host"] = str(self.node.ip_address)
-        input_arg["enclave_port"] = str(self.port)
+        input_arg["enclave_port"] = self.port
         input_arg["aesm_host"] = str(self.node.aesm_host)
-        input_arg["aesm_port"] = str(self.node.aesm_port)
+        input_arg["aesm_port"] = self.node.aesm_port
 
         input_file = tools.create_tmp(".yaml")
         DescriptorType.YAML.dump(input_file, input_arg)
