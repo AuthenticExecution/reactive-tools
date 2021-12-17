@@ -95,6 +95,7 @@ async def run_async_output(program, *args, env=None):
     result = await process.wait()
 
     if result != 0:
+        logging.error(err)
         raise ProcessRunError(program, args, result)
 
     return out, err
