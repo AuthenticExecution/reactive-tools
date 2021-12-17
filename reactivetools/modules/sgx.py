@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import json
 import rustsgxgen
 
 from .base import Module
