@@ -1,5 +1,5 @@
 FROM authexec/reactive-base:latest
 
 COPY . .
-RUN pip install . \
+RUN python -m pip install . \
     && rm -rf *
