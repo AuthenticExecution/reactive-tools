@@ -39,7 +39,7 @@ class SancusNode(Node):
         name = node_dict['name']
         vendor_id = node_dict['vendor_id']
         vendor_key = parse_key(node_dict['vendor_key'])
-        ip_address = tools.resolve_ip(node_dict['ip_address'])
+        ip_address = tools.resolve_ip(node_dict['host'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
 
@@ -50,7 +50,7 @@ class SancusNode(Node):
         return {
             "type": "sancus",
             "name": self.name,
-            "ip_address": str(self.ip_address),
+            "host": str(self.ip_address),
             "vendor_id": self.vendor_id,
             "vendor_key": dump(self.vendor_key),
             "reactive_port": self.reactive_port,

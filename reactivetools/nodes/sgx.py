@@ -79,7 +79,7 @@ class SGXNode(SGXBase):
     @staticmethod
     def load(node_dict):
         name = node_dict['name']
-        ip_address = tools.resolve_ip(node_dict['ip_address'])
+        ip_address = tools.resolve_ip(node_dict['host'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
         module_id = node_dict.get('module_id')
@@ -93,7 +93,7 @@ class SGXNode(SGXBase):
         return {
             "type": self.type,
             "name": self.name,
-            "ip_address": str(self.ip_address),
+            "host": str(self.ip_address),
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
             "module_id": self._moduleid,

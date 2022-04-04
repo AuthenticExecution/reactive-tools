@@ -5,7 +5,7 @@ type required:
   is_present(dict_, "type")
 
 name required:
-  is_present(dict_, "type")
+  is_present(dict_, "name")
 
 node required:
   is_present(dict_, "node")

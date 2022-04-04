@@ -28,7 +28,7 @@ class TrustZoneNode(Node):
     @staticmethod
     def load(node_dict):
         name = node_dict['name']
-        ip_address = tools.resolve_ip(node_dict['ip_address'])
+        ip_address = tools.resolve_ip(node_dict['host'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
         node_key = parse_key(node_dict['node_key'])
@@ -40,7 +40,7 @@ class TrustZoneNode(Node):
         return {
             "type": "trustzone",
             "name": self.name,
-            "ip_address": str(self.ip_address),
+            "host": str(self.ip_address),
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
             "node_key": dump(self.node_key),

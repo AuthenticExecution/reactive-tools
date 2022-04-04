@@ -5,10 +5,10 @@ type required:
   is_present(dict_, "type")
 
 name required:
-  is_present(dict_, "type")
+  is_present(dict_, "name")
 
 ip_address required:
-  is_present(dict_, "ip_address")
+  is_present(dict_, "host")
 
 reactive_port required:
   is_present(dict_, "reactive_port")
@@ -22,7 +22,7 @@ name must be a str:
   isinstance(dict_["name"], str)
 
 ip_address must be a str:
-  isinstance(dict_["ip_address"], str)
+  isinstance(dict_["host"], str)
 
 reactive_port must be a positive u16:
   is_positive_number(dict_["reactive_port"])
