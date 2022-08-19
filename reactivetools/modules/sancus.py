@@ -147,6 +147,10 @@ class SancusModule(Module):
     def get_supported_encryption():
         return [Encryption.SPONGENT]
 
+    @staticmethod
+    def get_default_encryption():
+        return Encryption.SPONGENT
+
     # --- Static methods --- #
 
     @staticmethod

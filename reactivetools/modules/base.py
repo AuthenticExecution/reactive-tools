@@ -223,6 +223,22 @@ class Module(ABC):
         `list`: list of Encryption objects
         """
 
+    @staticmethod
+    @abstractmethod
+    def get_default_encryption():
+        """
+        ### Description ###
+        Static method. Get the preferred crypto library used by the module
+        The Encryption enum is defined in crypto.py
+
+        e.g., SGXModule -> Encryption.AES
+
+        ### Parameters ###
+
+        ### Returns ###
+        `Encryption`: Encryption enum object
+        """
+
     # Default implementation of some functions.
     # Override them in the subclasses if you need a different implementation.
 

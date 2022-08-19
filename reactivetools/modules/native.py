@@ -206,6 +206,10 @@ class NativeModule(Module):
     def get_supported_encryption():
         return [Encryption.AES, Encryption.SPONGENT]
 
+    @staticmethod
+    def get_default_encryption():
+        return Encryption.AES
+
     # --- Static methods --- #
 
     # --- Others --- #

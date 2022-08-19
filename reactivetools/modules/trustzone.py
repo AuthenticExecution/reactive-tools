@@ -187,6 +187,10 @@ class TrustZoneModule(Module):
     def get_supported_encryption():
         return [Encryption.AES, Encryption.SPONGENT]
 
+    @staticmethod
+    def get_default_encryption():
+        return Encryption.AES
+
     # --- Other methods --- #
     async def generate_code(self):
         if self.__generate_fut is None:

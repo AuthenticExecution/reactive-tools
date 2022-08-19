@@ -145,7 +145,7 @@ class SancusNode(Node):
 
         module.nonce += 1
 
-        cipher = await encryption.SPONGENT.encrypt(module_key, ad, key)
+        cipher = await Encryption.SPONGENT.encrypt(module_key, ad, key)
 
         # The payload format is [sm_id, entry_id, 16 bit nonce, index, wrapped(key), tag]
         # where the tag includes the nonce and the index.

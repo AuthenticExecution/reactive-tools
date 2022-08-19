@@ -4,7 +4,7 @@ import binascii
 
 from abc import ABC, abstractmethod
 
-from reactivenet import ReactiveCommand, Message, CommandMessage
+from reactivenet import ReactiveCommand, Message, CommandMessage, ReactiveEntrypoint
 
 from .. import tools
 
@@ -329,6 +329,42 @@ class Node(ABC):
             command,
             log='Sending RegisterEntrypoint command of {}:{} ({}:{}) on {}'.format(
                 module.name, entry, module_id, entry_id, self.name)
+        )
+
+    async def exit_module(self, module):
+        """
+        ### Description ###
+        Coroutine. Sends a command to terminate the module
+
+        ### Parameters ###
+        self: Node object
+        module (XXXModule): target module
+
+        ### Returns ###
+        """
+        assert module.node is self
+        module_id, module_key = \
+            await asyncio.gather(module.get_id(), module.get_key())
+
+        ad = tools.pack_int16(module.nonce)
+        module.nonce += 1
+
+        cipher = await module.get_default_encryption().mac(module_key, ad)
+
+        # The payload format is [sm_id, entry_id, 16 bit nonce, tag]
+        payload = tools.pack_int16(module_id) + \
+            tools.pack_int16(ReactiveEntrypoint.Exit) + \
+            ad + \
+            cipher
+
+        command = CommandMessage(ReactiveCommand.Call,
+                                 Message(payload),
+                                 self.ip_address,
+                                 self.reactive_port)
+
+        await self._send_reactive_command(
+            command,
+            log='Sending exit command to module {}'.format(module.name)
         )
 
     async def _send_reactive_command(self, command, log=None):

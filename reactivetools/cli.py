@@ -229,6 +229,22 @@ def _parse_args(args):
         '--out',
         help='File to write the received result to')
 
+    # exit
+    exit_parser = subparsers.add_parser(
+        'exit',
+        help='Send a request to terminate a module')
+    exit_parser.set_defaults(command_handler=_handle_exit)
+    exit_parser.add_argument(
+        'config',
+        help='Specify configuration file to use')
+    exit_parser.add_argument(
+        '--module',
+        help='Name of the module to terminate',
+        required=True)
+    exit_parser.add_argument(
+        '--result',
+        help='File to write the resulting configuration to')
+
     return parser.parse_args(args)
 
 
@@ -358,6 +374,18 @@ def _handle_request(args):
     conn.nonce += 2
     out_file = args.result or args.config
     config.dump_config(conf, out_file)
+    conf.cleanup()
+
+
+def _handle_exit(args):
+    logging.info('Terminating %s', args.module)
+
+    conf = config.load(args.config, args.manager)
+    module = conf.get_module(args.module)
+
+    asyncio.get_event_loop().run_until_complete(
+        module.node.exit_module(module))
+
     conf.cleanup()
 
 
