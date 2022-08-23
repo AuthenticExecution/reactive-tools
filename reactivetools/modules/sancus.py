@@ -22,10 +22,11 @@ class Error(Exception):
 
 
 class SancusModule(Module):
-    def __init__(self, name, node, priority, deployed, nonce, attested, files,
-                 cflags, ldflags, binary, id_, symtab, key):
+    def __init__(self, name, node, old_node, priority, deployed, nonce, 
+        attested, files, cflags, ldflags, binary, id_, symtab, key):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
-        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce, 
+            attested, self.out_dir)
 
         self.files = files
         self.cflags = cflags
@@ -37,9 +38,10 @@ class SancusModule(Module):
         self.__attest_fut = tools.init_future(attested if attested else None)
 
     @staticmethod
-    def load(mod_dict, node_obj):
+    def load(mod_dict, node_obj, old_node_obj):
         name = mod_dict['name']
         node = node_obj
+        old_node = old_node_obj
         priority = mod_dict.get('priority')
         deployed = mod_dict.get('deployed')
         nonce = mod_dict.get('nonce')
@@ -52,14 +54,15 @@ class SancusModule(Module):
         symtab = parse_file_name(mod_dict.get('symtab'))
         key = parse_key(mod_dict.get('key'))
 
-        return SancusModule(name, node, priority, deployed, nonce, attested,
-                            files, cflags, ldflags, binary, id_, symtab, key)
+        return SancusModule(name, node, old_node, priority, deployed, nonce, 
+            attested, files, cflags, ldflags, binary, id_, symtab, key)
 
     def dump(self):
         return {
             "type": "sancus",
             "name": self.name,
             "node": self.node.name,
+            "old_node": self.old_node.name,
             "priority": self.priority,
             "deployed": self.deployed,
             "nonce": self.nonce,
@@ -72,6 +75,24 @@ class SancusModule(Module):
             "symtab": dump(self.symtab) if self.deployed else None,
             "key": dump(self.key) if self.deployed else None
         }
+
+    def clone(self):
+        return SancusModule(
+            self.name,
+            self.node,
+            self.old_node,
+            self.priority,
+            None,
+            None,
+            None,
+            self.files,
+            self.cflags,
+            self.ldflags,
+            None,
+            None,
+            None,
+            None
+        )
 
     # --- Properties --- #
 

@@ -31,11 +31,12 @@ BUILD_CMD = "make -C {{}} {} {} {} {{}} O={{}}".format(
 
 
 class TrustZoneModule(Module):
-    def __init__(self, name, node, priority, deployed, nonce, attested,
+    def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
                  binary, id_, uUID, key, data, folder):
         self.out_dir = os.path.join(
             glob.BUILD_DIR, "trustzone-{}".format(name))
-        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce, 
+            attested, self.out_dir)
 
         self.id = id_ if id_ is not None else node.get_module_id()
         self.folder = folder
@@ -48,9 +49,10 @@ class TrustZoneModule(Module):
         self.__attest_fut = tools.init_future(attested if attested else None)
 
     @staticmethod
-    def load(mod_dict, node_obj):
+    def load(mod_dict, node_obj, old_node_obj):
         name = mod_dict['name']
         node = node_obj
+        old_node = old_node_obj
         priority = mod_dict.get('priority')
         deployed = mod_dict.get('deployed')
         nonce = mod_dict.get('nonce')
@@ -61,14 +63,15 @@ class TrustZoneModule(Module):
         key = parse_key(mod_dict.get('key'))
         data = mod_dict.get('data')
         folder = mod_dict.get('folder') or name
-        return TrustZoneModule(name, node, priority, deployed, nonce, attested,
-                               binary, id_, uUID, key, data, folder)
+        return TrustZoneModule(name, node, old_node, priority, deployed, nonce, 
+            attested, binary, id_, uUID, key, data, folder)
 
     def dump(self):
         return {
             "type": "trustzone",
             "name": self.name,
             "node": self.node.name,
+            "old_node": self.old_node.name,
             "priority": self.priority,
             "deployed": self.deployed,
             "nonce": self.nonce,
@@ -80,6 +83,23 @@ class TrustZoneModule(Module):
             "data": dump(self.data) if self.deployed else None,
             "folder": self.folder
         }
+
+    def clone(self):
+        return TrustZoneModule(
+            self.name,
+            self.node,
+            self.old_node,
+            self.priority,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            self.folder
+        )
 
     # --- Properties --- #
 

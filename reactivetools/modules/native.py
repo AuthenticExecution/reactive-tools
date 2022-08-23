@@ -26,10 +26,11 @@ class Error(Exception):
 
 
 class NativeModule(Module):
-    def __init__(self, name, node, priority, deployed, nonce, attested, features,
-                 id_, binary, key, data, folder, port):
+    def __init__(self, name, node, old_node, priority, deployed, nonce, attested, 
+                features, id_, binary, key, data, folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "native-{}".format(folder))
-        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce, 
+            attested, self.out_dir)
 
         self.__generate_fut = tools.init_future(data, key)
         self.__build_fut = tools.init_future(binary)
@@ -40,9 +41,10 @@ class NativeModule(Module):
         self.folder = folder
 
     @staticmethod
-    def load(mod_dict, node_obj):
+    def load(mod_dict, node_obj, old_node_obj):
         name = mod_dict['name']
         node = node_obj
+        old_node = old_node_obj
         priority = mod_dict.get('priority')
         deployed = mod_dict.get('deployed')
         nonce = mod_dict.get('nonce')
@@ -55,14 +57,15 @@ class NativeModule(Module):
         folder = mod_dict.get('folder') or name
         port = mod_dict.get('port')
 
-        return NativeModule(name, node, priority, deployed, nonce, attested,
-                            features, id_, binary, key, data, folder, port)
+        return NativeModule(name, node, old_node, priority, deployed, nonce, 
+            attested, features, id_, binary, key, data, folder, port)
 
     def dump(self):
         return {
             "type": "native",
             "name": self.name,
             "node": self.node.name,
+            "old_node": self.old_node.name,
             "priority": self.priority,
             "deployed": self.deployed,
             "nonce": self.nonce,
@@ -76,6 +79,24 @@ class NativeModule(Module):
             "folder": self.folder,
             "port": self.port
         }
+
+    def clone(self):
+        return NativeModule(
+            self.name,
+            self.node,
+            self.old_node,
+            self.priority,
+            None,
+            None,
+            None,
+            self.features,
+            None,
+            None,
+            None,
+            None,
+            self.folder,
+            None
+        )
 
     # --- Properties --- #
 

@@ -43,6 +43,15 @@ class Config:
 
         raise Error('No module with name {}'.format(name))
 
+    def replace_module(self, module):
+        for i in range(len(self.modules)):
+            m = self.modules[i]
+            if m.name == module.name:
+                self.modules[i] = module
+                return
+
+        raise Error('No module with name {}'.format(module.name))
+
     def get_connection_by_id(self, id_):
         for c in self.connections:
             if c.id == id_:
@@ -178,6 +187,24 @@ class Config:
     def cleanup(self):
         asyncio.get_event_loop().run_until_complete(self.cleanup_async())
 
+    async def update_async(self, module):
+        # TODO
+        # first, we build, deploy and attest the new module
+        #   we need to get another ID for it
+        # second, we migrate the existing connections associated to that module
+        # finally, we terminate the old module
+        # set the old_node of the new module as the new one
+        new_module = module.clone()
+
+        # update in conf
+        new_module.old_node = new_module.node
+        self.replace_module(new_module)
+
+        #await module.deploy()
+
+    def update(self, module):
+        asyncio.get_event_loop().run_until_complete(self.update_async(module))
+
 
 def load(file_name, manager, output_type=None):
     config = Config()
@@ -234,7 +261,8 @@ def _load_module(mod_dict, config):
         "modules", module_rules[mod_dict['type']]), mod_dict)
 
     node = config.get_node(mod_dict['node'])
-    module = module_funcs[mod_dict['type']](mod_dict, node)
+    old_node = config.get_node(mod_dict.get('old_node', mod_dict['node']))
+    module = module_funcs[mod_dict['type']](mod_dict, node, old_node)
 
     if node.__class__ not in module.get_supported_nodes():
         raise Error("Node {} ({}) does not support module {} ({})".format(

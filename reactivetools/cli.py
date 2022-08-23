@@ -245,6 +245,22 @@ def _parse_args(args):
         '--result',
         help='File to write the resulting configuration to')
 
+    # update
+    update_parser = subparsers.add_parser(
+        'update',
+        help='Update a module')
+    update_parser.set_defaults(command_handler=_handle_update)
+    update_parser.add_argument(
+        'config',
+        help='Specify configuration file to use')
+    update_parser.add_argument(
+        '--module',
+        help='Name of the module to update',
+        required=True)
+    update_parser.add_argument(
+        '--result',
+        help='File to write the resulting configuration to')
+
     return parser.parse_args(args)
 
 
@@ -386,6 +402,20 @@ def _handle_disable(args):
     asyncio.get_event_loop().run_until_complete(
         module.node.disable_module(module))
 
+    conf.cleanup()
+
+
+def _handle_update(args):
+    logging.info('Updating %s', args.module)
+
+    conf = config.load(args.config, args.manager)
+    module = conf.get_module(args.module)
+
+    conf.update(module)
+
+    out_file = args.result or args.config
+    logging.info('Writing post-deployment configuration to %s', out_file)
+    config.dump_config(conf, out_file)
     conf.cleanup()
 
 
