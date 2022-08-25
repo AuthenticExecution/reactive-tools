@@ -8,7 +8,7 @@ with open("requirements.txt", "r") as f:
 
 setuptools.setup(
     name="reactive-tools",
-    version="0.5.3",
+    version="0.5.4",
     author="Gianluca Scopelliti",
     author_email="gianlu.1033@gmail.com",
     description="Deployment tools for the Authentic Execution framework",
