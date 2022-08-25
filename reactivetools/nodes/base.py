@@ -349,7 +349,7 @@ class Node(ABC):
         ad = tools.pack_int16(module.nonce)
         module.nonce += 1
 
-        cipher = await module.get_default_encryption().mac(module_key, ad)
+        cipher = await module.get_default_encryption().encrypt(module_key, ad, ad)
 
         # The payload format is [sm_id, entry_id, 16 bit nonce, tag]
         payload = tools.pack_int16(module_id) + \
