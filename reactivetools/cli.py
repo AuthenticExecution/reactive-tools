@@ -229,19 +229,19 @@ def _parse_args(args):
         '--out',
         help='File to write the received result to')
 
-    # exit
-    exit_parser = subparsers.add_parser(
-        'exit',
-        help='Send a request to terminate a module')
-    exit_parser.set_defaults(command_handler=_handle_exit)
-    exit_parser.add_argument(
+    # disable
+    disable_parser = subparsers.add_parser(
+        'disable',
+        help='Send a request to disable a module')
+    disable_parser.set_defaults(command_handler=_handle_disable)
+    disable_parser.add_argument(
         'config',
         help='Specify configuration file to use')
-    exit_parser.add_argument(
+    disable_parser.add_argument(
         '--module',
-        help='Name of the module to terminate',
+        help='Name of the module to disable',
         required=True)
-    exit_parser.add_argument(
+    disable_parser.add_argument(
         '--result',
         help='File to write the resulting configuration to')
 
@@ -377,14 +377,14 @@ def _handle_request(args):
     conf.cleanup()
 
 
-def _handle_exit(args):
-    logging.info('Terminating %s', args.module)
+def _handle_disable(args):
+    logging.info('Disabling %s', args.module)
 
     conf = config.load(args.config, args.manager)
     module = conf.get_module(args.module)
 
     asyncio.get_event_loop().run_until_complete(
-        module.node.exit_module(module))
+        module.node.disable_module(module))
 
     conf.cleanup()
 

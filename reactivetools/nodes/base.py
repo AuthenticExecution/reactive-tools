@@ -331,10 +331,10 @@ class Node(ABC):
                 module.name, entry, module_id, entry_id, self.name)
         )
 
-    async def exit_module(self, module):
+    async def disable_module(self, module):
         """
         ### Description ###
-        Coroutine. Sends a command to terminate the module
+        Coroutine. Sends a command to disable the module
 
         ### Parameters ###
         self: Node object
@@ -353,7 +353,7 @@ class Node(ABC):
 
         # The payload format is [sm_id, entry_id, 16 bit nonce, tag]
         payload = tools.pack_int16(module_id) + \
-            tools.pack_int16(ReactiveEntrypoint.Exit) + \
+            tools.pack_int16(ReactiveEntrypoint.Disable) + \
             ad + \
             cipher
 
@@ -364,7 +364,7 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log='Sending exit command to module {}'.format(module.name)
+            log='Sending disable command to module {}'.format(module.name)
         )
 
     async def _send_reactive_command(self, command, log=None):
