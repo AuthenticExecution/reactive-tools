@@ -10,8 +10,8 @@ class Error(Exception):
 
 
 class Module(ABC):
-    def __init__(self, name, node, old_node, priority, deployed, nonce, 
-        attested, out_dir):
+    def __init__(self, name, node, old_node, priority, deployed, nonce,
+                 attested, out_dir):
         """
         Generic attributes common to all Module subclasses
 
