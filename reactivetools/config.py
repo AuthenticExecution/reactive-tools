@@ -52,6 +52,15 @@ class Config:
 
         raise Error('No module with name {}'.format(module.name))
 
+    def replace_connection(self, conn):
+        for i in range(len(self.connections)):
+            c = self.connections[i]
+            if c.id == conn.id:
+                self.connections[i] = conn
+                return
+
+        raise Error('No connection with id {}'.format(conn.id))
+
     def get_connection_by_id(self, id_):
         for c in self.connections:
             if c.id == id_:
@@ -188,19 +197,41 @@ class Config:
         asyncio.get_event_loop().run_until_complete(self.cleanup_async())
 
     async def update_async(self, module):
-        # TODO
-        # first, we build, deploy and attest the new module
-        #   we need to get another ID for it
-        # second, we migrate the existing connections associated to that module
-        # finally, we terminate the old module
-        # set the old_node of the new module as the new one
+        if not module.deployed:
+            raise Error("Module is not deployed yet.")
+
+        # clone module
         new_module = module.clone()
+
+        logging.info("Deploying and attesting new {}".format(module))
+
+        await new_module.deploy()
+        await new_module.attest()
+
+        # re-establish all connections that involve this module
+        connections = [conn for conn in self.connections 
+            if conn.from_module == module or conn.to_module == module ]
+
+        for conn in connections:
+            logging.info("Re-establishing connection {} with id {}".format(conn.name, conn.id))
+            new_conn = conn.clone()
+
+            if new_conn.from_module == module:
+                new_conn.from_module = new_module
+            if new_conn.to_module == module:
+                new_conn.to_module = new_module
+
+            await new_conn.establish()
+            self.replace_connection(new_conn)
+
+        logging.info("Disabling old module")
+        await module.old_node.disable_module(module)
 
         # update in conf
         new_module.old_node = new_module.node
         self.replace_module(new_module)
 
-        #await module.deploy()
+        logging.info("Update complete")
 
     def update(self, module):
         asyncio.get_event_loop().run_until_complete(self.update_async(module))

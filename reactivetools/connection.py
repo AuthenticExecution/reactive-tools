@@ -56,9 +56,9 @@ class Connection:
         self.to_input = to_input
         self.to_handler = to_handler
         self.encryption = encryption
-        self.key = key
+        self.key = key or Connection.generate_key(from_module, to_module, encryption)  # auto-generated key
         self.id = id_
-        self.nonce = nonce
+        self.nonce = nonce  or 0
         self.established = established
 
         if direct:
@@ -83,9 +83,8 @@ class Connection:
         to_input = conn_dict.get('to_input')
         to_handler = conn_dict.get('to_handler')
         encryption = Encryption.from_str(conn_dict['encryption'])
-        key = parse_key(conn_dict.get('key')) or Connection.generate_key(
-            from_module, to_module, encryption)  # auto-generated key
-        nonce = conn_dict.get('nonce') or 0
+        key = parse_key(conn_dict.get('key'))
+        nonce = conn_dict.get('nonce')
         id_ = conn_dict.get('id')
         established = conn_dict.get('established')
 
@@ -120,6 +119,23 @@ class Connection:
             "nonce": self.nonce,
             "established": self.established
         }
+
+    def clone(self):
+        return Connection(
+            self.name,
+            self.from_module,
+            self.from_output,
+            self.from_request,
+            self.to_module,
+            self.to_input,
+            self.to_handler,
+            self.encryption,
+            None,
+            self.id,
+            self.direct,
+            None,
+            False
+        )
 
     async def establish(self):
         if self.established:
