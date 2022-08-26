@@ -3,8 +3,8 @@ import asyncio
 from collections import namedtuple
 import json
 import os
-import yaml
 import ntpath
+import yaml
 
 from elftools.elf import elffile
 
@@ -23,11 +23,12 @@ class Error(Exception):
 
 
 class SancusModule(Module):
-    def __init__(self, name, node, old_node, priority, deployed, nonce, 
-        attested, files, cflags, ldflags, binary, id_, symtab, key, deploy_name):
+    def __init__(self, name, node, old_node, priority, deployed, nonce,
+                 attested, files, cflags, ldflags, binary, id_, symtab, key,
+                 deploy_name):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
-        super().__init__(name, node, old_node, priority, deployed, nonce, 
-            attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce,
+                         attested, self.out_dir)
 
         self.files = files
         self.cflags = cflags
@@ -57,8 +58,9 @@ class SancusModule(Module):
         key = parse_key(mod_dict.get('key'))
         deploy_name = mod_dict.get('deploy_name')
 
-        return SancusModule(name, node, old_node, priority, deployed, nonce, 
-            attested, files, cflags, ldflags, binary, id_, symtab, key, deploy_name)
+        return SancusModule(name, node, old_node, priority, deployed, nonce,
+                            attested, files, cflags, ldflags, binary, id_,
+                            symtab, key, deploy_name)
 
     def dump(self):
         return {

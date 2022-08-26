@@ -35,8 +35,8 @@ class TrustZoneModule(Module):
                  binary, id_, uUID, key, data, folder):
         self.out_dir = os.path.join(
             glob.BUILD_DIR, "trustzone-{}".format(name))
-        super().__init__(name, node, old_node, priority, deployed, nonce, 
-            attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce,
+                         attested, self.out_dir)
 
         self.id = id_ if id_ is not None else node.get_module_id()
         self.folder = folder
@@ -63,8 +63,8 @@ class TrustZoneModule(Module):
         key = parse_key(mod_dict.get('key'))
         data = mod_dict.get('data')
         folder = mod_dict.get('folder') or name
-        return TrustZoneModule(name, node, old_node, priority, deployed, nonce, 
-            attested, binary, id_, uUID, key, data, folder)
+        return TrustZoneModule(name, node, old_node, priority, deployed, nonce,
+                               attested, binary, id_, uUID, key, data, folder)
 
     def dump(self):
         return {

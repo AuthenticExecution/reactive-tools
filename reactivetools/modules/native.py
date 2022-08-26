@@ -26,11 +26,11 @@ class Error(Exception):
 
 
 class NativeModule(Module):
-    def __init__(self, name, node, old_node, priority, deployed, nonce, attested, 
-                features, id_, binary, key, data, folder, port):
+    def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
+                 features, id_, binary, key, data, folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "native-{}".format(folder))
-        super().__init__(name, node, old_node, priority, deployed, nonce, 
-            attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce,
+                         attested, self.out_dir)
 
         self.__generate_fut = tools.init_future(data, key)
         self.__build_fut = tools.init_future(binary)
@@ -57,8 +57,9 @@ class NativeModule(Module):
         folder = mod_dict.get('folder') or name
         port = mod_dict.get('port')
 
-        return NativeModule(name, node, old_node, priority, deployed, nonce, 
-            attested, features, id_, binary, key, data, folder, port)
+        return NativeModule(name, node, old_node, priority, deployed, nonce,
+                            attested, features, id_, binary, key, data, folder,
+                            port)
 
     def dump(self):
         return {

@@ -37,12 +37,12 @@ class Error(Exception):
 class SGXModule(Module):
     sp_lock = asyncio.Lock()
 
-    def __init__(self, name, node, old_node, priority, deployed, nonce, attested, 
-        vendor_key, ra_settings, features, id_, binary, key, sgxs, signature, 
-        data, folder, port):
+    def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
+                 vendor_key, ra_settings, features, id_, binary, key, sgxs,
+                 signature, data, folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sgx-{}".format(folder))
-        super().__init__(name, node, old_node, priority, deployed, nonce, 
-            attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce,
+                         attested, self.out_dir)
 
         self.__generate_fut = tools.init_future(data)
         self.__build_fut = tools.init_future(binary)
@@ -79,9 +79,9 @@ class SGXModule(Module):
         folder = mod_dict.get('folder') or name
         port = mod_dict.get('port')
 
-        return SGXModule(name, node, old_node, priority, deployed, nonce, 
-            attested, vendor_key, settings, features, id_, binary, key, sgxs, 
-            signature, data, folder, port)
+        return SGXModule(name, node, old_node, priority, deployed, nonce,
+                         attested, vendor_key, settings, features, id_, binary,
+                         key, sgxs, signature, data, folder, port)
 
     def dump(self):
         return {

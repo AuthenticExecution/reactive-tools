@@ -56,7 +56,7 @@ class Connection:
         self.to_input = to_input
         self.to_handler = to_handler
         self.encryption = encryption
-        self.key = key or Connection.generate_key(from_module, to_module, encryption)  # auto-generated key
+        self.key = key or Connection.generate_key(from_module, to_module, encryption)
         self.id = id_
         self.nonce = nonce  or 0
         self.established = established

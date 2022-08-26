@@ -209,8 +209,8 @@ class Config:
         await new_module.attest()
 
         # re-establish all connections that involve this module
-        connections = [conn for conn in self.connections 
-            if conn.from_module == module or conn.to_module == module ]
+        connections = [conn for conn in self.connections
+                       if module in (conn.from_module, conn.to_module)]
 
         for conn in connections:
             logging.info("Re-establishing connection {} with id {}".format(conn.name, conn.id))

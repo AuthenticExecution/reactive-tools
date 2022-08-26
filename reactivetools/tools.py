@@ -182,5 +182,3 @@ def increment_value_in_string(s):
     val = int(matches[0][1])
 
     return "{}{}".format(name, val + 1)
-
-    
