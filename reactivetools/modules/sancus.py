@@ -4,6 +4,7 @@ from collections import namedtuple
 import json
 import os
 import yaml
+import ntpath
 
 from elftools.elf import elffile
 
@@ -23,7 +24,7 @@ class Error(Exception):
 
 class SancusModule(Module):
     def __init__(self, name, node, old_node, priority, deployed, nonce, 
-        attested, files, cflags, ldflags, binary, id_, symtab, key):
+        attested, files, cflags, ldflags, binary, id_, symtab, key, deploy_name):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
         super().__init__(name, node, old_node, priority, deployed, nonce, 
             attested, self.out_dir)
@@ -31,6 +32,7 @@ class SancusModule(Module):
         self.files = files
         self.cflags = cflags
         self.ldflags = ldflags
+        self.deploy_name = deploy_name or name
 
         self.__build_fut = tools.init_future(binary)
         self.__deploy_fut = tools.init_future(id_, symtab)
@@ -53,9 +55,10 @@ class SancusModule(Module):
         id_ = mod_dict.get('id')
         symtab = parse_file_name(mod_dict.get('symtab'))
         key = parse_key(mod_dict.get('key'))
+        deploy_name = mod_dict.get('deploy_name')
 
         return SancusModule(name, node, old_node, priority, deployed, nonce, 
-            attested, files, cflags, ldflags, binary, id_, symtab, key)
+            attested, files, cflags, ldflags, binary, id_, symtab, key, deploy_name)
 
     def dump(self):
         return {
@@ -73,7 +76,8 @@ class SancusModule(Module):
             "binary": dump(self.binary) if self.deployed else None,
             "id": dump(self.id) if self.deployed else None,
             "symtab": dump(self.symtab) if self.deployed else None,
-            "key": dump(self.key) if self.deployed else None
+            "key": dump(self.key) if self.deployed else None,
+            "deploy_name": self.deploy_name
         }
 
     def clone(self):
@@ -91,7 +95,8 @@ class SancusModule(Module):
             None,
             None,
             None,
-            None
+            None,
+            tools.increment_value_in_string(self.deploy_name)
         )
 
     # --- Properties --- #
@@ -202,9 +207,28 @@ class SancusModule(Module):
         logging.info('Building module %s from %s',
                      self.name, ', '.join(map(str, self.files)))
 
+        # clean out_dir first
+        for f in os.listdir(self.out_dir):
+            os.remove(os.path.join(self.out_dir, f))
+
+        # copy files to out_dir, replacing the name if needed
+        parsed_files = []
+        for sf in self.files:
+            with open(sf, "r") as f:
+                f_data = f.read()
+
+            f_data = f_data.replace("{name}", self.deploy_name)
+            pf = os.path.join(self.out_dir, ntpath.basename(sf))
+
+            with open(pf, "w") as f:
+                f.write(f_data)
+
+            parsed_files.append(pf)
+
+        # build
         config = self._get_build_config(tools.get_verbosity())
         objects = {str(p): tools.create_tmp(
-            suffix='.o', dir_name=self.out_dir) for p in self.files}
+            suffix='.o', dir_name=self.out_dir) for p in parsed_files}
 
         cflags = config.cflags + self.cflags
 
@@ -239,7 +263,7 @@ class SancusModule(Module):
             # we create a new file with empty config
             config_file = tools.create_tmp(
                 suffix='.yaml', dir_name=self.out_dir)
-            config = {self.name: []}
+            config = {self.deploy_name: []}
 
             # remove old flag if present, append new one
             ldflags = list(
@@ -248,7 +272,7 @@ class SancusModule(Module):
 
         # override num_connections if the value is present and is < self.connections
         if "num_connections" not in config or config["num_connections"] < self.connections:
-            config[self.name].append({"num_connections": self.connections})
+            config[self.deploy_name].append({"num_connections": self.connections})
 
         # save changes
         with open(config_file, "w") as f:
@@ -260,7 +284,7 @@ class SancusModule(Module):
         linked_binary = await self.__link()
 
         args = "{} --gen-sm-key {} --key {}".format(
-            linked_binary, self.name, dump(self.node.vendor_key)
+            linked_binary, self.deploy_name, dump(self.node.vendor_key)
         ).split()
 
         key, _ = await tools.run_async_output("sancus-crypto", *args)
@@ -279,7 +303,7 @@ class SancusModule(Module):
         return linked_binary
 
     async def _get_io_id(self, io_name):
-        sym_name = '__sm_{}_io_{}_idx'.format(self.name, io_name)
+        sym_name = '__sm_{}_io_{}_idx'.format(self.deploy_name, io_name)
         symbol = await self.__get_symbol(sym_name)
 
         if symbol is None:
@@ -289,7 +313,7 @@ class SancusModule(Module):
         return symbol
 
     async def _get_entry_id(self, entry_name):
-        sym_name = '__sm_{}_entry_{}_idx'.format(self.name, entry_name)
+        sym_name = '__sm_{}_entry_{}_idx'.format(self.deploy_name, entry_name)
         symbol = await self.__get_symbol(sym_name)
 
         if symbol is None:
@@ -321,7 +345,7 @@ class SancusModule(Module):
             "em_port": self.node.reactive_port,
             "key": list(await self.key)
         }
-        data_file = tools.create_tmp(suffix=".json")
+        data_file = os.path.join(self.out_dir, "attest.json")
         with open(data_file, "w") as f:
             json.dump(data, f)
 
@@ -338,6 +362,5 @@ class SancusModule(Module):
         logging.info("Done Remote Attestation of {}. Key: {}".format(
             self.name, key_arr))
         self.attested = True
-
 
 _BuildConfig = namedtuple('_BuildConfig', ['cc', 'cflags', 'ld', 'ldflags'])

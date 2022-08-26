@@ -273,7 +273,7 @@ class TrustZoneModule(Module):
             "em_port": self.node.reactive_port,
             "key": list(await self.key)
         }
-        data_file = tools.create_tmp(suffix=".json")
+        data_file = os.path.join(self.out_dir, "attest.json")
         with open(data_file, "w") as f:
             json.dump(data, f)
 

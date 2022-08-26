@@ -377,7 +377,7 @@ class SGXModule(Module):
         input_arg["aesm_host"] = str(self.node.aesm_host)
         input_arg["aesm_port"] = self.node.aesm_port
 
-        input_file = tools.create_tmp(".yaml")
+        input_file = os.path.join(self.out_dir, "attest.yaml")
         DescriptorType.YAML.dump(input_file, input_arg)
 
         args = [input_file]
@@ -402,7 +402,7 @@ class SGXModule(Module):
             "sigstruct": await self.sig,
             "config": self.ra_settings
         }
-        data_file = tools.create_tmp(suffix=".json")
+        data_file = os.path.join(self.out_dir, "attest.json")
         DescriptorType.JSON.dump(data_file, data)
 
         args = "--config {} --request attest-sgx --data {}".format(

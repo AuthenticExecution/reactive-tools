@@ -67,7 +67,7 @@ class SancusNode(Node):
             file_data = await f.read()
 
         # The packet format is [NAME \0 VID ELF_FILE]
-        payload = module.name.encode('ascii') + b'\0' + \
+        payload = module.deploy_name.encode('ascii') + b'\0' + \
             tools.pack_int16(self.vendor_id) + \
             file_data
 
