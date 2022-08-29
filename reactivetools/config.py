@@ -244,6 +244,8 @@ class Config:
         # TODO transfer state?
 
         # re-establish all connections that involve this module
+        t2 = self.record_time()
+
         connections = [conn for conn in self.connections
                        if module in (conn.from_module, conn.to_module)]
 
@@ -258,6 +260,8 @@ class Config:
 
             await self.__establish_connection(new_conn)
             self.replace_connection(new_conn)
+
+        self.record_time(t2, "Connect time for {}".format(new_module.name))
 
         # update in conf
         new_module.old_node = new_module.node
