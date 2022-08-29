@@ -342,7 +342,7 @@ class Node(ABC):
 
         ### Returns ###
         """
-        assert module.node is self
+        assert module.old_node is self
         module_id, module_key = \
             await asyncio.gather(module.get_id(), module.get_key())
 

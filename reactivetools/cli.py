@@ -39,6 +39,10 @@ def _parse_args(args):
         '--manager',
         help='Offload the task to the Attestation Manager, if possible',
         action='store_true')
+    parser.add_argument(
+        '--timing',
+        help='Measure time between operations, for evaluation',
+        action='store_true')
 
     subparsers = parser.add_subparsers(dest='command')
     # Workaround a Python bug. See http://bugs.python.org/issue9253#msg186387
@@ -245,6 +249,22 @@ def _parse_args(args):
         '--result',
         help='File to write the resulting configuration to')
 
+    # update
+    update_parser = subparsers.add_parser(
+        'update',
+        help='Update a module')
+    update_parser.set_defaults(command_handler=_handle_update)
+    update_parser.add_argument(
+        'config',
+        help='Specify configuration file to use')
+    update_parser.add_argument(
+        '--module',
+        help='Name of the module to update',
+        required=True)
+    update_parser.add_argument(
+        '--result',
+        help='File to write the resulting configuration to')
+
     return parser.parse_args(args)
 
 
@@ -254,7 +274,7 @@ def _handle_deploy(args):
     glob.set_build_mode(args.mode)
 
     os.chdir(args.workspace)
-    conf = config.load(args.config, args.manager, args.output)
+    conf = config.load(args.config, args.manager, args.timing, args.output)
 
     conf.deploy(args.deploy_in_order, args.module)
 
@@ -270,7 +290,7 @@ def _handle_build(args):
     glob.set_build_mode(args.mode)
 
     os.chdir(args.workspace)
-    conf = config.load(args.config, args.manager)
+    conf = config.load(args.config, args.manager, args.timing)
 
     conf.build(args.module)
     conf.cleanup()
@@ -279,7 +299,7 @@ def _handle_build(args):
 def _handle_attest(args):
     logging.info('Attesting modules')
 
-    conf = config.load(args.config, args.manager, args.output)
+    conf = config.load(args.config, args.manager, args.timing, args.output)
 
     conf.attest(args.module)
 
@@ -292,7 +312,7 @@ def _handle_attest(args):
 def _handle_connect(args):
     logging.info('Connecting modules')
 
-    conf = config.load(args.config, args.manager, args.output)
+    conf = config.load(args.config, args.manager, args.timing, args.output)
 
     conf.connect(args.connection)
 
@@ -305,7 +325,7 @@ def _handle_connect(args):
 def _handle_register(args):
     logging.info('Registering periodic events')
 
-    conf = config.load(args.config, args.manager, args.output)
+    conf = config.load(args.config, args.manager, args.timing, args.output)
 
     conf.register_event(args.event)
 
@@ -318,11 +338,15 @@ def _handle_register(args):
 def _handle_call(args):
     logging.info('Calling %s:%s', args.module, args.entry)
 
-    conf = config.load(args.config, args.manager)
+    conf = config.load(args.config, args.manager, args.timing)
     module = conf.get_module(args.module)
+
+    t1 = conf.record_time()
 
     asyncio.get_event_loop().run_until_complete(
         module.node.call(module, args.entry, args.arg, args.out))
+
+    conf.record_time(t1, "Call time for {}:{}".format(args.module, args.entry))
 
     conf.cleanup()
 
@@ -330,7 +354,7 @@ def _handle_call(args):
 def _handle_output(args):
     logging.info('Triggering output of connection %s', args.connection)
 
-    conf = config.load(args.config, args.manager)
+    conf = config.load(args.config, args.manager, args.timing)
 
     if args.connection.isnumeric():
         conn = conf.get_connection_by_id(int(args.connection))
@@ -343,8 +367,12 @@ def _handle_output(args):
     if conn.to_input is None:
         raise Error("Not a output-input connection")
 
+    t1 = conf.record_time()
+
     asyncio.get_event_loop().run_until_complete(
         conn.to_module.node.output(conn, args.arg))
+
+    conf.record_time(t1, "Output time for {}".format(conn.name))
 
     conn.nonce += 1
     out_file = args.result or args.config
@@ -355,7 +383,7 @@ def _handle_output(args):
 def _handle_request(args):
     logging.info('Triggering request of connection %s', args.connection)
 
-    conf = config.load(args.config, args.manager)
+    conf = config.load(args.config, args.manager, args.timing)
 
     if args.connection.isnumeric():
         conn = conf.get_connection_by_id(int(args.connection))
@@ -368,8 +396,12 @@ def _handle_request(args):
     if conn.to_handler is None:
         raise Error("Not a request-handler connection")
 
+    t1 = conf.record_time()
+
     asyncio.get_event_loop().run_until_complete(
         conn.to_module.node.request(conn, args.arg, args.out))
+
+    conf.record_time(t1, "Request time for {}".format(conn.name))
 
     conn.nonce += 2
     out_file = args.result or args.config
@@ -380,12 +412,30 @@ def _handle_request(args):
 def _handle_disable(args):
     logging.info('Disabling %s', args.module)
 
-    conf = config.load(args.config, args.manager)
+    conf = config.load(args.config, args.manager, args.timing)
     module = conf.get_module(args.module)
+
+    t1 = conf.record_time()
 
     asyncio.get_event_loop().run_until_complete(
         module.node.disable_module(module))
 
+    conf.record_time(t1, "Disable time for {}".format(module.name))
+
+    conf.cleanup()
+
+
+def _handle_update(args):
+    logging.info('Updating %s', args.module)
+
+    conf = config.load(args.config, args.manager, args.timing)
+    module = conf.get_module(args.module)
+
+    conf.update(module)
+
+    out_file = args.result or args.config
+    logging.info('Writing post-deployment configuration to %s', out_file)
+    config.dump_config(conf, out_file)
     conf.cleanup()
 
 

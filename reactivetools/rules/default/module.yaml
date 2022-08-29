@@ -21,6 +21,10 @@ name must be a str:
 node must be a str:
   isinstance(dict_["node"], str)
 
+old_node must be a str:
+  not is_present(dict_, "old_node") or
+  (is_present(dict_, "old_node") and isinstance(dict_["old_node"], str))
+
 priority must be an int:
   not is_present(dict_, "priority") or
   (is_present(dict_, "priority") and isinstance(dict_["priority"], int))

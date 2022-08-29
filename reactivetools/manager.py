@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from . import tools
 from . import glob
@@ -53,7 +54,7 @@ class Manager:
                 self.config).split()
             out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
 
-            self.sp_pubkey = tools.create_tmp(suffix=".pem")
+            self.sp_pubkey = os.path.join(glob.BUILD_DIR, "manager-sp_pubkey.pem")
             with open(self.sp_pubkey, "wb") as f:
                 f.write(out)
 

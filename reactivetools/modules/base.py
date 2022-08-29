@@ -10,7 +10,8 @@ class Error(Exception):
 
 
 class Module(ABC):
-    def __init__(self, name, node, priority, deployed, nonce, attested, out_dir):
+    def __init__(self, name, node, old_node, priority, deployed, nonce,
+                 attested, out_dir):
         """
         Generic attributes common to all Module subclasses
 
@@ -25,6 +26,7 @@ class Module(ABC):
         """
         self.name = name
         self.node = node
+        self.old_node = old_node
         self.priority = priority
         self.deployed = deployed
         self.nonce = 0 if nonce is None else nonce
@@ -43,7 +45,7 @@ class Module(ABC):
 
     @staticmethod
     @abstractmethod
-    def load(mod_dict, node_obj):
+    def load(mod_dict, node_obj, old_node_obj):
         """
         ### Description ###
         Creates a XXXModule object from a dict
@@ -53,6 +55,8 @@ class Module(ABC):
         ### Parameters ###
         mod_dict (dict): dictionary containing the definition of the module
         node_obj (XXXNode): object where the module belongs to
+        old_node_obj (XXXNode): object where the old module belongs to.
+                                only used during module updates!
 
         ### Returns ###
         An instance of the XXXModule class
@@ -73,6 +77,22 @@ class Module(ABC):
 
         ### Returns ###
         `dict`: description of the object
+        """
+
+    @abstractmethod
+    def clone(self):
+        """
+        ### Description ###
+        Coroutine. Create a copy of the current module, but in a clean state,
+        i.e., not deployed nor attested
+
+        The
+
+        ### Parameters ###
+        self: Module object
+
+        ### Returns ###
+        `Module`: copy of the Module object
         """
 
     @abstractmethod

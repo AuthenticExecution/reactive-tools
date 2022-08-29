@@ -37,11 +37,12 @@ class Error(Exception):
 class SGXModule(Module):
     sp_lock = asyncio.Lock()
 
-    def __init__(self, name, node, priority, deployed, nonce, attested, vendor_key,
-                 ra_settings, features, id_, binary, key, sgxs, signature, data,
-                 folder, port):
+    def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
+                 vendor_key, ra_settings, features, id_, binary, key, sgxs,
+                 signature, data, folder, port):
         self.out_dir = os.path.join(glob.BUILD_DIR, "sgx-{}".format(folder))
-        super().__init__(name, node, priority, deployed, nonce, attested, self.out_dir)
+        super().__init__(name, node, old_node, priority, deployed, nonce,
+                         attested, self.out_dir)
 
         self.__generate_fut = tools.init_future(data)
         self.__build_fut = tools.init_future(binary)
@@ -58,9 +59,10 @@ class SGXModule(Module):
         self.folder = folder
 
     @staticmethod
-    def load(mod_dict, node_obj):
+    def load(mod_dict, node_obj, old_node_obj):
         name = mod_dict['name']
         node = node_obj
+        old_node = old_node_obj
         priority = mod_dict.get('priority')
         deployed = mod_dict.get('deployed')
         nonce = mod_dict.get('nonce')
@@ -77,15 +79,16 @@ class SGXModule(Module):
         folder = mod_dict.get('folder') or name
         port = mod_dict.get('port')
 
-        return SGXModule(name, node, priority, deployed, nonce, attested, vendor_key,
-                         settings, features, id_, binary, key, sgxs, signature, data, folder,
-                         port)
+        return SGXModule(name, node, old_node, priority, deployed, nonce,
+                         attested, vendor_key, settings, features, id_, binary,
+                         key, sgxs, signature, data, folder, port)
 
     def dump(self):
         return {
             "type": "sgx",
             "name": self.name,
             "node": self.node.name,
+            "old_node": self.old_node.name,
             "priority": self.priority,
             "deployed": self.deployed,
             "nonce": self.nonce,
@@ -102,6 +105,28 @@ class SGXModule(Module):
             "folder": self.folder,
             "port": self.port
         }
+
+    def clone(self):
+        return SGXModule(
+            self.name,
+            self.node,
+            self.old_node,
+            self.priority,
+            None,
+            None,
+            None,
+            self.vendor_key,
+            self.ra_settings,
+            self.features,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            self.folder,
+            None
+        )
 
     # --- Properties --- #
 
@@ -352,7 +377,7 @@ class SGXModule(Module):
         input_arg["aesm_host"] = str(self.node.aesm_host)
         input_arg["aesm_port"] = self.node.aesm_port
 
-        input_file = tools.create_tmp(".yaml")
+        input_file = os.path.join(self.out_dir, "attest.yaml")
         DescriptorType.YAML.dump(input_file, input_arg)
 
         args = [input_file]
@@ -377,7 +402,7 @@ class SGXModule(Module):
             "sigstruct": await self.sig,
             "config": self.ra_settings
         }
-        data_file = tools.create_tmp(suffix=".json")
+        data_file = os.path.join(self.out_dir, "attest.json")
         DescriptorType.JSON.dump(data_file, data)
 
         args = "--config {} --request attest-sgx --data {}".format(

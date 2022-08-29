@@ -6,6 +6,7 @@ import struct
 from enum import Enum
 import socket
 import ipaddress
+import re
 
 from . import glob
 
@@ -170,3 +171,14 @@ def pack_int32(i):
 
 def unpack_int32(i):
     return struct.unpack('!I', i)[0]
+
+def increment_value_in_string(s):
+    matches = re.findall(r"^(.+)([0-9]+)$", s)
+
+    if not matches:
+        return s + "_2"
+
+    name = matches[0][0]
+    val = int(matches[0][1])
+
+    return "{}{}".format(name, val + 1)
