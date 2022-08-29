@@ -208,6 +208,11 @@ class Config:
         await new_module.deploy()
         await new_module.attest()
 
+        logging.info("Disabling old module")
+        await module.old_node.disable_module(module)
+
+        # TODO transfer state?
+
         # re-establish all connections that involve this module
         connections = [conn for conn in self.connections
                        if module in (conn.from_module, conn.to_module)]
@@ -223,9 +228,6 @@ class Config:
 
             await new_conn.establish()
             self.replace_connection(new_conn)
-
-        logging.info("Disabling old module")
-        await module.old_node.disable_module(module)
 
         # update in conf
         new_module.old_node = new_module.node
