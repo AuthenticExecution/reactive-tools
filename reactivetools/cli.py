@@ -340,12 +340,12 @@ def _handle_call(args):
 
     conf = config.load(args.config, args.manager, args.timing)
     module = conf.get_module(args.module)
-    
+
     t1 = conf.record_time()
 
     asyncio.get_event_loop().run_until_complete(
         module.node.call(module, args.entry, args.arg, args.out))
-    
+
     conf.record_time(t1, "Call time for {}:{}".format(args.module, args.entry))
 
     conf.cleanup()

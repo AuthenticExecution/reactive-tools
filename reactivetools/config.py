@@ -158,7 +158,7 @@ class Config:
     async def build_async(self, module):
         lst = self.modules if not module else [self.get_module(module)]
 
-        futures = [__build_module(module) for module in lst]
+        futures = [self.__build_module(module) for module in lst]
         await asyncio.gather(*futures)
 
     def build(self, module):
@@ -174,7 +174,7 @@ class Config:
 
         logging.info("To attest: {}".format([x.name for x in to_attest]))
 
-        futures = map(lambda x: self.__attest_module(x), to_attest)
+        futures = map(self.__attest_module, to_attest)
         await asyncio.gather(*futures)
 
     def attest(self, module):
@@ -193,7 +193,7 @@ class Config:
 
         logging.info("To connect: {}".format([x.name for x in to_connect]))
 
-        futures = map(lambda x: self.__establish_connection(x), to_connect)
+        futures = map(self.__establish_connection, to_connect)
         await asyncio.gather(*futures)
 
     def connect(self, conn):
@@ -210,7 +210,7 @@ class Config:
 
         logging.info("To register: {}".format([x.name for x in to_register]))
 
-        futures = map(lambda x: self.__register_event(x), to_register)
+        futures = map(self.__register_event, to_register)
         await asyncio.gather(*futures)
 
     def register_event(self, event):
@@ -234,7 +234,7 @@ class Config:
         new_module = module.clone()
 
         logging.info("Deploying and attesting new {}".format(module))
-        
+
         await self.__deploy_module(new_module)
         await self.__attest_module(new_module)
 
@@ -272,7 +272,7 @@ class Config:
     def record_time(self, previous=None, msg=None):
         if not self.measure_time:
             return None
-            
+
         t = time.time()
 
         if not previous:
@@ -280,7 +280,7 @@ class Config:
 
         print("{}: {:.3f}".format(msg, t - previous))
 
-        return t   
+        return t
 
 
 def load(file_name, manager, measure_time, output_type=None):
