@@ -1,6 +1,7 @@
 import os
 import asyncio
 import logging
+import time
 
 from .modules import Module
 from .nodes import Node
@@ -82,6 +83,33 @@ class Config:
 
         raise Error('No periodic event with name {}'.format(name))
 
+    async def __deploy_module(self, module):
+        t1 = self.record_time()
+        await module.build()
+        t2 = self.record_time(t1, "Build time for {}".format(module.name))
+        await module.deploy()
+        self.record_time(t2, "Deploy time for {}".format(module.name))
+
+    async def __build_module(self, module):
+        t1 = self.record_time()
+        await module.build()
+        self.record_time(t1, "Build time for {}".format(module.name))
+
+    async def __attest_module(self, module):
+        t1 = self.record_time()
+        await module.attest()
+        self.record_time(t1, "Attest time for {}".format(module.name))
+
+    async def __establish_connection(self, conn):
+        t1 = self.record_time()
+        await conn.establish()
+        self.record_time(t1, "Establish time for {}".format(conn.name))
+
+    async def __register_event(self, event):
+        t1 = self.record_time()
+        await event.register()
+        self.record_time(t1, "Register time for {}".format(event.name))
+
     async def deploy_priority_modules(self):
         priority_modules = [
             sm for sm in self.modules if sm.priority is not None and not sm.deployed]
@@ -90,7 +118,7 @@ class Config:
         logging.debug("Priority modules: {}".format(
             [sm.name for sm in priority_modules]))
         for module in priority_modules:
-            await module.deploy()
+            await self.__deploy_module(module)
 
     async def deploy_async(self, in_order, module):
         # If module is not None, deploy just this one
@@ -100,7 +128,7 @@ class Config:
                 raise Error('Module {} already deployed'.format(module))
 
             logging.info("Deploying {}".format(module))
-            await mod.deploy()
+            await self.__deploy_module(mod)
             return
 
         # First, deploy all modules that have a priority (in order of priority)
@@ -110,7 +138,7 @@ class Config:
         if in_order:
             for m in self.modules:
                 if not m.deployed:
-                    await m.deploy()
+                    await self.__deploy_module(m)
         # Otherwise, deploy all modules concurrently
         else:
             lst = self.modules
@@ -119,7 +147,7 @@ class Config:
                 return not x.deployed
 
             def l_map(x):
-                return x.deploy()
+                return self.__deploy_module(x)
 
             futures = map(l_map, filter(l_filter, lst))
             await asyncio.gather(*futures)
@@ -130,7 +158,7 @@ class Config:
     async def build_async(self, module):
         lst = self.modules if not module else [self.get_module(module)]
 
-        futures = [module.build() for module in lst]
+        futures = [__build_module(module) for module in lst]
         await asyncio.gather(*futures)
 
     def build(self, module):
@@ -146,7 +174,7 @@ class Config:
 
         logging.info("To attest: {}".format([x.name for x in to_attest]))
 
-        futures = map(lambda x: x.attest(), to_attest)
+        futures = map(lambda x: self.__attest_module(x), to_attest)
         await asyncio.gather(*futures)
 
     def attest(self, module):
@@ -165,7 +193,7 @@ class Config:
 
         logging.info("To connect: {}".format([x.name for x in to_connect]))
 
-        futures = map(lambda x: x.establish(), to_connect)
+        futures = map(lambda x: self.__establish_connection(x), to_connect)
         await asyncio.gather(*futures)
 
     def connect(self, conn):
@@ -182,7 +210,7 @@ class Config:
 
         logging.info("To register: {}".format([x.name for x in to_register]))
 
-        futures = map(lambda x: x.register(), to_register)
+        futures = map(lambda x: self.__register_event(x), to_register)
         await asyncio.gather(*futures)
 
     def register_event(self, event):
@@ -200,13 +228,15 @@ class Config:
         if not module.deployed:
             raise Error("Module is not deployed yet.")
 
+        t1 = self.record_time()
+
         # clone module
         new_module = module.clone()
 
         logging.info("Deploying and attesting new {}".format(module))
-
-        await new_module.deploy()
-        await new_module.attest()
+        
+        await self.__deploy_module(new_module)
+        await self.__attest_module(new_module)
 
         logging.info("Disabling old module")
         await module.old_node.disable_module(module)
@@ -226,7 +256,7 @@ class Config:
             if new_conn.to_module == module:
                 new_conn.to_module = new_module
 
-            await new_conn.establish()
+            await self.__establish_connection(new_conn)
             self.replace_connection(new_conn)
 
         # update in conf
@@ -234,12 +264,26 @@ class Config:
         self.replace_module(new_module)
 
         logging.info("Update complete")
+        self.record_time(t1, "Update time for {}".format(new_module.name))
 
     def update(self, module):
         asyncio.get_event_loop().run_until_complete(self.update_async(module))
 
+    def record_time(self, previous=None, msg=None):
+        if not self.measure_time:
+            return None
+            
+        t = time.time()
 
-def load(file_name, manager, output_type=None):
+        if not previous:
+            return t
+
+        print("{}: {:.3f}".format(msg, t - previous))
+
+        return t   
+
+
+def load(file_name, manager, measure_time, output_type=None):
     config = Config()
     desc_type = DescriptorType.from_str(output_type)
 
@@ -249,6 +293,8 @@ def load(file_name, manager, output_type=None):
     #   - desc_type if has been provided as input, or
     #   - the same type of the input file otherwise
     config.output_type = desc_type or input_type
+
+    config.measure_time = measure_time
 
     if manager:
         _load_manager(contents['manager'], config)
