@@ -9,7 +9,7 @@ import aiofile
 
 from .base import Node
 from .. import tools
-from ..crypto import Encryption
+from ..crypto import Encryption, hash_sha256
 from ..dumpers import *
 from ..loaders import *
 
@@ -19,10 +19,13 @@ class Error(Exception):
 
 
 class TrustZoneNode(Node):
-    def __init__(self, name, ip_address, reactive_port, deploy_port, node_key, module_id):
+    def __init__(self, name, ip_address, reactive_port, deploy_port,
+                 vendor_id, node_key, vendor_key, module_id):
         super().__init__(name, ip_address, reactive_port, deploy_port, need_lock=False)
 
+        self.vendor_id = vendor_id
         self.node_key = node_key
+        self.vendor_key = vendor_key
         self._moduleid = module_id if module_id else 1
 
     @staticmethod
@@ -31,10 +34,21 @@ class TrustZoneNode(Node):
         ip_address = tools.resolve_ip(node_dict['host'])
         reactive_port = node_dict['reactive_port']
         deploy_port = node_dict.get('deploy_port') or reactive_port
-        node_key = parse_key(node_dict['node_key'])
+        vendor_id = node_dict['vendor_id']
+        node_key = parse_key(node_dict.get('node_key'))
+        vendor_key = parse_key(node_dict.get('vendor_key'))
         module_id = node_dict.get('module_id')
 
-        return TrustZoneNode(name, ip_address, reactive_port, deploy_port, node_key, module_id)
+        if node_key is None and vendor_key is None:
+            raise Error("At least one between node key and vendor key is needed")
+
+        # generate vendor key right away, if needed
+        if vendor_key is None:
+            input_hash = node_key + struct.pack('<H', vendor_id)
+            vendor_key = hash_sha256(input_hash)
+
+        return TrustZoneNode(name, ip_address, reactive_port, deploy_port,
+                             vendor_id, node_key, vendor_key, module_id)
 
     def dump(self):
         return {
@@ -43,7 +57,9 @@ class TrustZoneNode(Node):
             "host": str(self.ip_address),
             "reactive_port": self.reactive_port,
             "deploy_port": self.deploy_port,
-            "node_key": dump(self.node_key),
+            "vendor_id": self.vendor_id,
+            "node_key": dump(self.node_key) if self.node_key else None,
+            "vendor_key": dump(self.vendor_key),
             "module_id": self._moduleid
         }
 

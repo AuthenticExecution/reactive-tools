@@ -1,6 +1,5 @@
 import logging
 import asyncio
-import hashlib
 import json
 import os
 import tzcodegen
@@ -9,7 +8,7 @@ from .base import Module
 from ..nodes import TrustZoneNode
 from .. import tools
 from .. import glob
-from ..crypto import Encryption
+from ..crypto import Encryption, hash_sha256
 from ..dumpers import *
 from ..loaders import *
 from ..manager import get_manager
@@ -223,6 +222,7 @@ class TrustZoneModule(Module):
 
         args.input = self.folder
         args.output = self.out_dir
+        args.vendor_id = self.node.vendor_id
 
         args.print = None
 
@@ -251,18 +251,13 @@ class TrustZoneModule(Module):
 
     async def __calculate_key(self):
         binary = await self.binary
-        node_key = self.node.node_key
+        vendor_key = self.node.vendor_key
 
         with open(binary, 'rb') as f:
             # first 20 bytes are the header (struct shdr), next 32 bytes are the hash
             module_hash = f.read(52)[20:]
 
-        key_size = Encryption.AES.get_key_size()
-        if key_size > 32:
-            raise Error(
-                "SHA256 cannot compute digests with length {}".format(key_size))
-
-        return hashlib.sha256(node_key + module_hash).digest()[:key_size]
+        return hash_sha256(vendor_key + module_hash, Encryption.AES.get_key_size())
 
     async def __attest_manager(self):
         data = {

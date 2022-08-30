@@ -1,3 +1,4 @@
+import hashlib
 from enum import IntEnum
 from Crypto.Cipher import AES
 
@@ -109,3 +110,10 @@ async def decrypt_spongent(key, ad, data=[]):
         raise Error("Decryption failed")
 
     return plain
+
+def hash_sha256(data, size=32):
+    if size > 32:
+        raise Error(
+            "SHA256 cannot compute digests with length {}".format(size))
+
+    return hashlib.sha256(data).digest()[:size]
