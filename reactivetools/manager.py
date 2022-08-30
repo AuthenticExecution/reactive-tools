@@ -6,16 +6,19 @@ from . import glob
 from .descriptor import DescriptorType
 
 __manager = None
+__is_active = False
 
-
-def set_manager(man):
+def set_manager(man, is_active):
     global __manager
+    global __is_active
     __manager = man
+    __is_active = is_active
 
+def get_manager(force=False):
+    if __is_active or force:
+        return __manager
 
-def get_manager():
-    return __manager
-
+    return None
 
 class Manager:
     lock = asyncio.Lock()
