@@ -385,6 +385,9 @@ class SGXModule(Module):
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
 
+        # wait to let the enclave open the new socket
+        await asyncio.sleep(0.1)
+
         logging.info("Done Remote Attestation of {}. Key: {}".format(
             self.name, key_arr))
         self.key = key
@@ -410,6 +413,9 @@ class SGXModule(Module):
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
+
+        # wait to let the enclave open the new socket
+        await asyncio.sleep(0.1)
 
         logging.info("Done Remote Attestation of {}. Key: {}".format(
             self.name, key_arr))
