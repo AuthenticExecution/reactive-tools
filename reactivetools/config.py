@@ -110,6 +110,41 @@ class Config:
         await event.register()
         self.record_time(t1, "Register time for {}".format(event.name))
 
+    async def __transfer_state(self, module, new_module,
+                               entry_name, output_name, input_name):
+        if not all([entry_name, output_name, input_name]):
+            return
+
+        t1 = self.record_time()
+
+        conn_transfer = Connection(
+            "__transfer",
+            module,
+            output_name,
+            None,
+            new_module,
+            input_name,
+            None,
+            module.get_default_encryption(),
+            None,
+            self.connections_current_id,
+            None,
+            False,
+            False
+        )
+
+        # create new connection
+        await conn_transfer.establish()
+
+        # call entry point of module
+        await module.node.call(module, entry_name, None, None)
+
+        # disable both modules
+        await module.node.disable_module(module)
+        await new_module.node.disable_module(new_module)
+
+        self.record_time(t1, "Transfer time for {}".format(new_module.name))
+
     async def deploy_priority_modules(self):
         priority_modules = [
             sm for sm in self.modules if sm.priority is not None and not sm.deployed]
@@ -224,14 +259,16 @@ class Config:
     def cleanup(self):
         asyncio.get_event_loop().run_until_complete(self.cleanup_async())
 
-    async def update_async(self, module):
+    async def update_async(self, module, entry_name, output_name, input_name):
         if not module.deployed:
             raise Error("Module is not deployed yet.")
 
         t1 = self.record_time()
 
-        # clone module
+        # clone module and update nodes
         new_module = module.clone()
+        module.node = module.old_node
+        new_module.old_node = new_module.node
 
         logging.info("Deploying and attesting new {}".format(module))
 
@@ -239,9 +276,11 @@ class Config:
         await self.__attest_module(new_module)
 
         logging.info("Disabling old module")
-        await module.old_node.disable_module(module)
+        await module.node.disable_module(module)
 
-        # TODO transfer state?
+        # transfer state
+        await self.__transfer_state(module, new_module,
+                                    entry_name, output_name, input_name)
 
         # re-establish all connections that involve this module
         t2 = self.record_time()
@@ -264,14 +303,14 @@ class Config:
         self.record_time(t2, "Connect time for {}".format(new_module.name))
 
         # update in conf
-        new_module.old_node = new_module.node
         self.replace_module(new_module)
 
         logging.info("Update complete")
         self.record_time(t1, "Update time for {}".format(new_module.name))
 
-    def update(self, module):
-        asyncio.get_event_loop().run_until_complete(self.update_async(module))
+    def update(self, module, entry_name, output_name, input_name):
+        asyncio.get_event_loop().run_until_complete(
+            self.update_async(module, entry_name, output_name, input_name))
 
     def record_time(self, previous=None, msg=None):
         if not self.measure_time:
@@ -300,8 +339,11 @@ def load(file_name, manager, measure_time, output_type=None):
 
     config.measure_time = measure_time
 
-    if manager:
+    try:
         _load_manager(contents['manager'], config)
+    except:
+        if manager:
+            raise
 
     config.nodes = load_list(contents['nodes'],
                              lambda n: _load_node(n, config))

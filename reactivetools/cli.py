@@ -264,6 +264,15 @@ def _parse_args(args):
     update_parser.add_argument(
         '--result',
         help='File to write the resulting configuration to')
+    update_parser.add_argument(
+        '--entry',
+        help='Entry point of the old module to call (for state transfer)')
+    update_parser.add_argument(
+        '--output',
+        help='Output of the old module to connect (for state transfer)')
+    update_parser.add_argument(
+        '--input',
+        help='Input of the new module to connect (for state transfer)')
 
     return parser.parse_args(args)
 
@@ -431,7 +440,7 @@ def _handle_update(args):
     conf = config.load(args.config, args.manager, args.timing)
     module = conf.get_module(args.module)
 
-    conf.update(module)
+    conf.update(module, args.entry, args.output, args.input)
 
     out_file = args.result or args.config
     logging.info('Writing post-deployment configuration to %s', out_file)

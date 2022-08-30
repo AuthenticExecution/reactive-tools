@@ -115,8 +115,8 @@ class Connection:
             "encryption": self.encryption.to_str(),
             "key": dump(self.key),
             "id": self.id,
-            "direct": self.direct,
             "nonce": self.nonce,
+            "direct": self.direct,
             "established": self.established
         }
 
@@ -132,8 +132,8 @@ class Connection:
             self.encryption,
             None,
             self.id,
-            self.direct,
             None,
+            self.direct,
             False
         )
 
