@@ -435,6 +435,10 @@ def _handle_disable(args):
 
 
 def _handle_update(args):
+    update_args = [args.entry, args.output, args.input]
+    if any(update_args) and not all(update_args):
+        raise Error("Required either none or all: [--entry, --output, --input]")
+
     logging.info('Updating %s', args.module)
 
     conf = config.load(args.config, args.manager, args.timing)
