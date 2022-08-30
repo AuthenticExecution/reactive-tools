@@ -340,7 +340,7 @@ def load(file_name, manager, measure_time, output_type=None):
     config.measure_time = measure_time
 
     try:
-        _load_manager(contents['manager'], config)
+        _load_manager(contents['manager'], config, manager)
     except:
         if manager:
             raise
@@ -407,14 +407,14 @@ def _load_periodic_event(events_dict, config):
     return PeriodicEvent.load(events_dict, config)
 
 
-def _load_manager(man_file, config):
+def _load_manager(man_file, config, is_active):
     if man_file is None:
         raise Error("Error while parsing manager information")
 
     man_dict, _ = DescriptorType.load_any(man_file)
     evaluate_rules(os.path.join("default", "manager.yaml"), man_dict)
     man = Manager.load(man_file, man_dict, config)
-    set_manager(man)
+    set_manager(man, is_active)
 
 
 def evaluate_rules(rules_file, dict_):
@@ -442,7 +442,7 @@ def dump_config(config, file_name):
 
 @dump.register(Config)
 def _(config):
-    man = get_manager()
+    man = get_manager(True)
     return {
         'manager': dump(man) if man is not None else None,
         'nodes': dump(config.nodes),
