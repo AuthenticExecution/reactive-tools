@@ -14,7 +14,7 @@ def set_manager(man, is_active):
     __manager = man
     __is_active = is_active
 
-def get_manager(force):
+def get_manager(force=False):
     if __is_active or force:
         return __manager
 
