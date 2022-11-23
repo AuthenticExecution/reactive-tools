@@ -40,7 +40,7 @@ class Module(ABC):
         except FileExistsError:
             pass
         except:
-            logging.error("Failed to create build dir for {}".format(name))
+            logging.error(f"Failed to create build dir for {name}")
             sys.exit(-1)
 
     @staticmethod
@@ -287,8 +287,7 @@ class Module(ABC):
         ### Returns ###
         `int`: ID of the request
         """
-        raise Error("Request/handler messages not supported for {}".format(
-            self.__class__.__name__))
+        raise Error(f"Request/handler messages not supported for {self.__class__.__name__}")
 
     async def get_handler_id(self, handler):
         """
@@ -304,5 +303,4 @@ class Module(ABC):
         ### Returns ###
         `int`: ID of the handler
         """
-        raise Error("Request/handler messages not supported for {}".format(
-            self.__class__.__name__))
+        raise Error(f"Request/handler messages not supported for {self.__class__.__name__}")

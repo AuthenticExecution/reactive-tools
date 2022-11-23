@@ -22,7 +22,7 @@ class BuildMode(IntEnum):
         if mode_lower == "release":
             return BuildMode.RELEASE
 
-        raise Error("Bad BuildMode: {}".format(mode))
+        raise Error(f"Bad BuildMode: {mode}")
 
     def to_str(self):
         if self == BuildMode.DEBUG:

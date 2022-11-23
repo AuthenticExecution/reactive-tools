@@ -19,8 +19,7 @@ class ProcessRunError(Exception):
         self.result = result
 
     def __str__(self):
-        return 'Command "{} {}" exited with code {}' \
-            .format(self.cmd, ' '.join(self.args), self.result)
+        return f'Command "{self.cmd} {" ".join(self.args)}" exited with code {self.result}'
 
 
 class Error(Exception):
@@ -131,7 +130,7 @@ def resolve_ip(host):
         pass
 
     # Otherwise, raise exception
-    raise Error("Invalid host: {}".format(host))
+    raise Error(f"Invalid host: {host}")
 
 
 def create_tmp(suffix='', dir_name=''):
@@ -181,4 +180,4 @@ def increment_value_in_string(s):
     name = matches[0][0]
     val = int(matches[0][1])
 
-    return "{}{}".format(name, val + 1)
+    return f"{name}{val + 1}"

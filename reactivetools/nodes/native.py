@@ -48,7 +48,7 @@ class NativeNode(SGXBase):
 
         await self._send_reactive_command(
             command,
-            log='Deploying {} on {}'.format(module.name, self.name)
+            log=f'Deploying {module.name} on {self.name}'
         )
 
         module.deployed = True

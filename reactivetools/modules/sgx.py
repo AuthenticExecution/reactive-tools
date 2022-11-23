@@ -40,7 +40,7 @@ class SGXModule(Module):
     def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
                  vendor_key, ra_settings, features, id_, binary, key, sgxs,
                  signature, data, folder, port):
-        self.out_dir = os.path.join(glob.BUILD_DIR, "sgx-{}".format(folder))
+        self.out_dir = os.path.join(glob.BUILD_DIR, f"sgx-{folder}")
         super().__init__(name, node, old_node, priority, deployed, nonce,
                          attested, self.out_dir)
 
@@ -320,7 +320,7 @@ class SGXModule(Module):
         args.print = None
 
         data, _ = rustsgxgen.generate(args)
-        logging.info("Generated code for module {}".format(self.name))
+        logging.info(f"Generated code for module {self.name}")
 
         return data
 
@@ -342,7 +342,7 @@ class SGXModule(Module):
         binary = os.path.join(self.out_dir, "target", SGX_TARGET,
                               glob.get_build_mode().to_str(), self.folder)
 
-        logging.info("Built module {}".format(self.name))
+        logging.info(f"Built module {self.name}")
 
         return binary
 
@@ -350,11 +350,11 @@ class SGXModule(Module):
         binary = await self.binary
         debug = "--debug" if glob.get_build_mode() == glob.BuildMode.DEBUG else ""
 
-        sgxs = "{}.sgxs".format(binary)
+        sgxs = f"{binary}.sgxs"
 
         # use this format for the file names to deal with multiple SMs built
         # from the same source code, but with different vendor keys
-        sig = "{}-{}.sig".format(binary, self.name)
+        sig = f"{binary}-{self.name}.sig"
 
         cmd_convert = CONVERT_SGX.format(binary, debug).split()
         cmd_sign = SIGN_SGX.format(self.vendor_key, sgxs, sig, debug).split()
@@ -362,7 +362,7 @@ class SGXModule(Module):
         await tools.run_async(*cmd_convert)
         await tools.run_async(*cmd_sign)
 
-        logging.info("Converted & signed module {}".format(self.name))
+        logging.info(f"Converted & signed module {self.name}")
 
         return sgxs, sig
 
@@ -388,8 +388,7 @@ class SGXModule(Module):
         # wait to let the enclave open the new socket
         await asyncio.sleep(0.1)
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(
-            self.name, key_arr))
+        logging.info(f"Done Remote Attestation of {self.name}. Key: {key_arr}")
         self.key = key
         self.attested = True
 
@@ -408,8 +407,8 @@ class SGXModule(Module):
         data_file = os.path.join(self.out_dir, "attest.json")
         DescriptorType.JSON.dump(data_file, data)
 
-        args = "--config {} --request attest-sgx --data {}".format(
-            get_manager().config, data_file).split()
+        args = f"""--config {get_manager().config} --request attest-sgx
+                   --data {data_file}""".split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
@@ -417,8 +416,7 @@ class SGXModule(Module):
         # wait to let the enclave open the new socket
         await asyncio.sleep(0.1)
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(
-            self.name, key_arr))
+        logging.info(f"Done Remote Attestation of {self.name}. Key: {key_arr}")
         self.key = key
         self.attested = True
 
@@ -434,9 +432,8 @@ class SGXModule(Module):
 
             cmd = "openssl"
 
-            args_private = "genrsa -f4 -out {} 2048".format(priv).split()
-            args_public = "rsa -in {} -outform PEM -pubout -out {}".format(
-                priv, pub).split()
+            args_private = f"genrsa -f4 -out {priv} 2048".split()
+            args_public = f"rsa -in {priv} -outform PEM -pubout -out {pub}".split()
 
             await tools.run_async_shell(cmd, *args_private)
             await tools.run_async_shell(cmd, *args_public)

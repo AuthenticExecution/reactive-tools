@@ -22,7 +22,7 @@ class PeriodicEvent:
             id_ = config.events_current_id  # incremental ID
             config.events_current_id += 1
 
-        name = event_dict.get('name') or "event{}".format(id_)
+        name = event_dict.get('name') or f"event{id_}"
 
         return PeriodicEvent(name, id_, module, entry, frequency, established)
 

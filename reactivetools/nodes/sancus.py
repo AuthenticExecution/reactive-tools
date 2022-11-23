@@ -78,13 +78,12 @@ class SancusNode(Node):
 
         res = await self._send_reactive_command(
             command,
-            log='Deploying {} on {}'.format(module.name, self.name)
+            log=f'Deploying {module.name} on {self.name}'
         )
 
         sm_id = tools.unpack_int16(res.message.payload[:2])
         if sm_id == 0:
-            raise Error('Deploying {} on {} failed'
-                        .format(module.name, self.name))
+            raise Error(f'Deploying {module.name} on {self.name} failed')
 
         symtab = res.message.payload[2:]
         symtab_file = tools.create_tmp(suffix='.ld', dir_name=module.out_dir)
@@ -118,7 +117,7 @@ class SancusNode(Node):
 
         res = await self._send_reactive_command(
             command,
-            log='Attesting {}'.format(module.name)
+            log=f'Attesting {module.name}'
         )
 
         # The result format is [tag] where the tag is the challenge's MAC
@@ -126,9 +125,9 @@ class SancusNode(Node):
         expected_tag = await Encryption.SPONGENT.mac(module_key, challenge)
 
         if challenge_response != expected_tag:
-            raise Error('Attestation of {} failed'.format(module.name))
+            raise Error(f'Attestation of {module.name} failed')
 
-        logging.info("Attestation of {} succeeded".format(module.name))
+        logging.info(f"Attestation of {module.name} succeeded")
         module.attested = True
 
     async def set_key(self, module, conn_id, conn_io, encryption, key):
@@ -161,7 +160,6 @@ class SancusNode(Node):
 
         await self._send_reactive_command(
             command,
-            log='Setting key of {}:{} on {} to {}'.format(
-                module.name, conn_io.name, self.name,
-                binascii.hexlify(key).decode('ascii'))
+            log=f"""Setting key of {module.name}:{conn_io.name} on {self.name}
+                    to {binascii.hexlify(key).decode('ascii')}"""
         )

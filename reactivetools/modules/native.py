@@ -28,7 +28,7 @@ class Error(Exception):
 class NativeModule(Module):
     def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
                  features, id_, binary, key, data, folder, port):
-        self.out_dir = os.path.join(glob.BUILD_DIR, "native-{}".format(folder))
+        self.out_dir = os.path.join(glob.BUILD_DIR, f"native-{folder}")
         super().__init__(name, node, old_node, priority, deployed, nonce,
                          attested, self.out_dir)
 
@@ -254,7 +254,7 @@ class NativeModule(Module):
         args.print = None
 
         data, key = rustsgxgen.generate(args)
-        logging.info("Generated code for module {}".format(self.name))
+        logging.info(f"Generated code for module {self.name}")
 
         return data, key
 
@@ -262,8 +262,7 @@ class NativeModule(Module):
         await self.generate_code()
 
         release = "--release" if glob.get_build_mode() == glob.BuildMode.RELEASE else ""
-        features = "--features " + \
-            " ".join(self.features) if self.features else ""
+        features = "--features " + " ".join(self.features) if self.features else ""
 
         cmd = BUILD_APP.format(release, features, self.out_dir).split()
         await tools.run_async(*cmd)
@@ -274,9 +273,10 @@ class NativeModule(Module):
         #      problems when these SMs are built at the same time.
         #      Find a way to solve this issue.
         binary = os.path.join(self.out_dir,
-                              "target", glob.get_build_mode().to_str(), self.folder)
+                              "target",
+                              glob.get_build_mode().to_str(), self.folder)
 
-        logging.info("Built module {}".format(self.name))
+        logging.info(f"Built module {self.name}")
         return binary
 
     async def __attest_manager(self):
@@ -292,15 +292,14 @@ class NativeModule(Module):
         with open(data_file, "w") as f:
             json.dump(data, f)
 
-        args = "--config {} --request attest-native --data {}".format(
-            get_manager().config, data_file).split()
+        args = f"""--config {get_manager().config}
+                   --request attest-native --data
+                   {data_file}""".split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
 
         if await self.key != key:
-            raise Error(
-                "Received key is different from {} key".format(self.name))
+            raise Error(f"Received key is different from {self.name} key")
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(
-            self.name, key_arr))
+        logging.info(f"Done Remote Attestation of {self.name}. Key: {key_arr}")

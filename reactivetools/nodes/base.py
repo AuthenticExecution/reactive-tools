@@ -158,7 +158,7 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log='Connecting id {} to {}'.format(conn_id, to_module.name))
+            log=f'Connecting id {conn_id} to {to_module.name}')
 
     async def call(self, module, entry, arg=None, output=None):
         """
@@ -189,17 +189,17 @@ class Node(ABC):
 
         response = await self._send_reactive_command(
             command,
-            log='Sending call command to {}:{} ({}:{}) on {}'.format(
-                module.name, entry, module_id, entry_id, self.name)
+            log=f"""Sending call command to {module.name}:{entry}
+                    ({module_id}:{entry_id}) on {self.name}"""
         )
 
         if not response.ok():
-            logging.error("Received error code {}".format(str(response.code)))
+            logging.error(f"Received error code {str(response.code)}")
             return
 
         if output is None:
-            logging.info("Response: \"{}\"".format(
-                binascii.hexlify(response.message.payload).decode('ascii')))
+            pl = binascii.hexlify(response.message.payload).decode('ascii')
+            logging.info(f"Response: \"{pl}\"")
         else:
             with open(output, "wb") as f:
                 f.write(response.message.payload)
@@ -239,8 +239,9 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log='Sending handle_output command of connection {}:{} to {} on {}'.format(
-                connection.id, connection.name, connection.to_module.name, self.name)
+            log=f"""Sending handle_output command of connection
+                    {connection.id}:{connection.name} to {connection.to_module.name} 
+                    on {self.name}"""
         )
 
     async def request(self, connection, arg=None, output=None):
@@ -278,12 +279,13 @@ class Node(ABC):
 
         response = await self._send_reactive_command(
             command,
-            log='Sending handle_request command of connection {}:{} to {} on {}'.format(
-                connection.id, connection.name, connection.to_module.name, self.name)
+            log=f"""Sending handle_request command of connection
+                    {connection.id}:{connection.name} to 
+                    {connection.to_module.name} on {self.name}"""
         )
 
         if not response.ok():
-            logging.error("Received error code {}".format(str(response.code)))
+            logging.error(f"Received error code {str(response.code)}")
             return
 
         resp_encrypted = response.message.payload
@@ -293,8 +295,7 @@ class Node(ABC):
                                                         resp_encrypted)
 
         if output is None:
-            logging.info("Response: \"{}\"".format(
-                binascii.hexlify(plaintext).decode('ascii')))
+            logging.info(f"Response: \"{binascii.hexlify(plaintext).decode('ascii')}\"")
         else:
             with open(output, "wb") as f:
                 f.write(plaintext)
@@ -327,8 +328,8 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log='Sending RegisterEntrypoint command of {}:{} ({}:{}) on {}'.format(
-                module.name, entry, module_id, entry_id, self.name)
+            log=f"""Sending RegisterEntrypoint command of
+                    {module.name}:{entry} ({module_id}:{entry_id}) on {self.name}"""
         )
 
     async def disable_module(self, module):
@@ -364,7 +365,7 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log='Sending disable command to module {}'.format(module.name)
+            log=f'Sending disable command to module {module.name}'
         )
 
     async def _send_reactive_command(self, command, log=None):
@@ -405,8 +406,8 @@ class Node(ABC):
         if command.has_response():
             response = await command.send_wait()
             if not response.ok():
-                raise Error('Reactive command {} failed with code {}'
-                            .format(str(command.code), str(response.code)))
+                raise Error(f"""Reactive command {str(command.code)} failed
+                                with code {str(response.code)}""")
             return response
 
         await command.send()

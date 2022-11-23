@@ -39,6 +39,6 @@ def load_rules(file):
         data = DescriptorType.YAML.load(path)
         return data if data is not None else {}
     except Exception as e:
-        logging.warning("Something went wrong during load of {}".format(file))
+        logging.warning(f"Something went wrong during load of {file}")
         logging.debug(e)
         return {}

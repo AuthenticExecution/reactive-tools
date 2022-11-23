@@ -20,7 +20,7 @@ class Encryption(IntEnum):
         if lower_str == "spongent":
             return Encryption.SPONGENT
 
-        raise Error("No matching encryption type for {}".format(str_))
+        raise Error(f"No matching encryption type for {str_}")
 
     def to_str(self):
         if self == Encryption.AES:
@@ -28,7 +28,7 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return "spongent"
 
-        raise Error("to_str not implemented for {}".format(self.name))
+        raise Error(f"to_str not implemented for {self.name}")
 
     def get_key_size(self):
         if self == Encryption.AES:
@@ -36,7 +36,7 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return 16
 
-        raise Error("get_key_size not implemented for {}".format(self.name))
+        raise Error(f"get_key_size not implemented for {self.name}")
 
     async def encrypt(self, key, ad, data):
         if self == Encryption.AES:
@@ -44,7 +44,7 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return await encrypt_spongent(key, ad, data)
 
-        raise Error("encrypt not implemented for {}".format(self.name))
+        raise Error(f"encrypt not implemented for {self.name}")
 
     async def decrypt(self, key, ad, data):
         if self == Encryption.AES:
@@ -52,7 +52,7 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return await decrypt_spongent(key, ad, data)
 
-        raise Error("decrypt not implemented for {}".format(self.name))
+        raise Error(f"decrypt not implemented for {self.name}")
 
     async def mac(self, key, ad):
         if self == Encryption.AES:
@@ -60,7 +60,7 @@ class Encryption(IntEnum):
         if self == Encryption.SPONGENT:
             return await encrypt_spongent(key, ad)
 
-        raise Error("mac not implemented for {}".format(self.name))
+        raise Error(f"mac not implemented for {self.name}")
 
 
 async def encrypt_aes(key, ad, data=b''):
@@ -113,7 +113,6 @@ async def decrypt_spongent(key, ad, data=[]):
 
 def hash_sha256(data, size=32):
     if size > 32:
-        raise Error(
-            "SHA256 cannot compute digests with length {}".format(size))
+        raise Error(f"SHA256 cannot compute digests with length {size}")
 
     return hashlib.sha256(data).digest()[:size]

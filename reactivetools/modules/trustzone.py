@@ -33,7 +33,7 @@ class TrustZoneModule(Module):
     def __init__(self, name, node, old_node, priority, deployed, nonce, attested,
                  binary, id_, uUID, key, data, folder):
         self.out_dir = os.path.join(
-            glob.BUILD_DIR, "trustzone-{}".format(name))
+            glob.BUILD_DIR, f"trustzone-{name}")
         super().__init__(name, node, old_node, priority, deployed, nonce,
                          attested, self.out_dir)
 
@@ -227,7 +227,7 @@ class TrustZoneModule(Module):
         args.print = None
 
         data, uUID = tzcodegen.generate(args)
-        logging.info("Generated code for module {}".format(self.name))
+        logging.info(f"Generated code for module {self.name}")
 
         return data, uUID
 
@@ -245,7 +245,7 @@ class TrustZoneModule(Module):
 
         await tools.run_async_shell(cmd)
 
-        binary = "{}/{}.ta".format(self.out_dir, self.uuid_for_MK)
+        binary = f"{self.out_dir}/{self.uuid_for_MK}.ta"
 
         return binary
 
@@ -272,16 +272,15 @@ class TrustZoneModule(Module):
         with open(data_file, "w") as f:
             json.dump(data, f)
 
-        args = "--config {} --request attest-trustzone --data {}".format(
-            get_manager().config, data_file).split()
+        args = f"""--config {get_manager().config} --request attest-trustzone
+                   --data {data_file}""".split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
 
         if await self.key != key:
             raise Error(
-                "Received key is different from {} key".format(self.name))
+                f"Received key is different from {self.name} key")
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(
-            self.name, key_arr))
+        logging.info(f"Done Remote Attestation of {self.name}. Key: {key_arr}")
         self.attested = True

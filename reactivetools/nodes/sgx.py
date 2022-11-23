@@ -54,9 +54,8 @@ class SGXBase(Node):
 
         await self._send_reactive_command(
             command,
-            log='Setting key of connection {} ({}:{}) on {} to {}'.format(
-                conn_id, module.name, conn_io.name, self.name,
-                binascii.hexlify(key).decode('ascii'))
+            log=f"""Setting key of connection {conn_id} ({module.name}:{conn_io.name})
+                    on {self.name} to {binascii.hexlify(key).decode('ascii')}"""
         )
 
     def get_module_id(self):
@@ -122,7 +121,7 @@ class SGXNode(SGXBase):
 
         await self._send_reactive_command(
             command,
-            log='Deploying {} on {}'.format(module.name, self.name)
+            log=f'Deploying {module.name} on {self.name}'
         )
 
         module.deployed = True

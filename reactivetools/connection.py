@@ -92,7 +92,7 @@ class Connection:
             id_ = config.connections_current_id  # incremental ID
             config.connections_current_id += 1
 
-        name = conn_dict.get('name') or "conn{}".format(id_)
+        name = conn_dict.get('name') or f"conn{id_}"
 
         if from_module is not None:
             from_module.connections += 1
@@ -178,7 +178,7 @@ class Connection:
     def generate_key(module1, module2, encryption):
         if (module1 is not None and encryption not in module1.get_supported_encryption()) \
                 or encryption not in module2.get_supported_encryption():
-            raise Error('Encryption {} not supported between {} and {}'.format(
-                str(encryption), module1.name, module2.name))
+            raise Error(f"""Encryption {str(encryption)} not supported
+                            between {module1.name} and {module2.name}""")
 
         return tools.generate_key(encryption.get_key_size())

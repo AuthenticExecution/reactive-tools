@@ -355,7 +355,7 @@ def _handle_call(args):
     asyncio.get_event_loop().run_until_complete(
         module.node.call(module, args.entry, args.arg, args.out))
 
-    conf.record_time(t1, "Call time for {}:{}".format(args.module, args.entry))
+    conf.record_time(t1, f"Call time for {args.module}:{args.entry}")
 
     conf.cleanup()
 
@@ -381,7 +381,7 @@ def _handle_output(args):
     asyncio.get_event_loop().run_until_complete(
         conn.to_module.node.output(conn, args.arg))
 
-    conf.record_time(t1, "Output time for {}".format(conn.name))
+    conf.record_time(t1, f"Output time for {conn.name}")
 
     conn.nonce += 1
     out_file = args.result or args.config
@@ -410,7 +410,7 @@ def _handle_request(args):
     asyncio.get_event_loop().run_until_complete(
         conn.to_module.node.request(conn, args.arg, args.out))
 
-    conf.record_time(t1, "Request time for {}".format(conn.name))
+    conf.record_time(t1, f"Request time for {conn.name}")
 
     conn.nonce += 2
     out_file = args.result or args.config
@@ -429,7 +429,7 @@ def _handle_disable(args):
     asyncio.get_event_loop().run_until_complete(
         module.node.disable_module(module))
 
-    conf.record_time(t1, "Disable time for {}".format(module.name))
+    conf.record_time(t1, f"Disable time for {module.name}")
 
     conf.cleanup()
 
@@ -473,7 +473,7 @@ def main(raw_args=None):
 
         logging.error(e)
 
-        for task in asyncio.Task.all_tasks():
+        for task in asyncio.all_tasks():
             task.cancel()
 
         sys.exit(-1)

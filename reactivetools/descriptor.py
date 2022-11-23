@@ -24,12 +24,12 @@ class DescriptorType(IntEnum):
         if type_lower == "yaml":
             return DescriptorType.YAML
 
-        raise Error("Bad deployment descriptor type: {}".format(type_))
+        raise Error(f"Bad deployment descriptor type: {type_}")
 
     @staticmethod
     def load_any(file):
         if not os.path.exists(file):
-            raise Error("Input file {} does not exist".format(file))
+            raise Error(f"Input file {file} does not exist")
 
         try:
             return DescriptorType.JSON.load(file), DescriptorType.JSON
@@ -37,8 +37,7 @@ class DescriptorType(IntEnum):
             try:
                 return DescriptorType.YAML.load(file), DescriptorType.YAML
             except:
-                raise Error(
-                    "Input file {} is not a JSON, nor a YAML".format(file))
+                raise Error(f"Input file {file} is not a JSON, nor a YAML")
 
     def load(self, file):
         with open(file, 'r') as f:
@@ -48,8 +47,7 @@ class DescriptorType(IntEnum):
             if self == DescriptorType.YAML:
                 return yaml.load(f, Loader=yaml.FullLoader)
 
-            raise Error(
-                "load not implemented for {}".format(self.name))
+            raise Error(f"load not implemented for {self.name}")
 
     def dump(self, file, data):
         with open(file, 'w') as f:
@@ -58,4 +56,4 @@ class DescriptorType(IntEnum):
             elif self == DescriptorType.YAML:
                 yaml.dump(data, f)
             else:
-                raise Error("dump not implemented for {}".format(self.name))
+                raise Error(f"dump not implemented for {self.name}")

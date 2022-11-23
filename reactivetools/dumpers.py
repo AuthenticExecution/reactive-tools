@@ -6,7 +6,7 @@ import binascii
 
 @functools.singledispatch
 def dump(obj):
-    assert False, 'No dumper for {}'.format(type(obj))
+    assert False, f'No dumper for {type(obj)}'
 
 
 @dump.register(list)

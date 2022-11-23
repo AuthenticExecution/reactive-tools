@@ -35,14 +35,14 @@ class Config:
             if n.name == name:
                 return n
 
-        raise Error('No node with name {}'.format(name))
+        raise Error(f'No node with name {name}')
 
     def get_module(self, name):
         for m in self.modules:
             if m.name == name:
                 return m
 
-        raise Error('No module with name {}'.format(name))
+        raise Error(f'No module with name {name}')
 
     def replace_module(self, module):
         for i in range(len(self.modules)):
@@ -51,7 +51,7 @@ class Config:
                 self.modules[i] = module
                 return
 
-        raise Error('No module with name {}'.format(module.name))
+        raise Error(f'No module with name {module.name}')
 
     def replace_connection(self, conn):
         for i in range(len(self.connections)):
@@ -60,55 +60,55 @@ class Config:
                 self.connections[i] = conn
                 return
 
-        raise Error('No connection with id {}'.format(conn.id))
+        raise Error(f'No connection with id {conn.id}')
 
     def get_connection_by_id(self, id_):
         for c in self.connections:
             if c.id == id_:
                 return c
 
-        raise Error('No connection with ID {}'.format(id_))
+        raise Error(f'No connection with ID {id_}')
 
     def get_connection_by_name(self, name):
         for c in self.connections:
             if c.name == name:
                 return c
 
-        raise Error('No connection with name {}'.format(name))
+        raise Error(f'No connection with name {name}')
 
     def get_periodic_event(self, name):
         for e in self.periodic_events:
             if e.name == name:
                 return e
 
-        raise Error('No periodic event with name {}'.format(name))
+        raise Error(f'No periodic event with name {name}')
 
     async def __deploy_module(self, module):
         t1 = self.record_time()
         await module.build()
-        t2 = self.record_time(t1, "Build time for {}".format(module.name))
+        t2 = self.record_time(t1, f"Build time for {module.name}")
         await module.deploy()
-        self.record_time(t2, "Deploy time for {}".format(module.name))
+        self.record_time(t2, f"Deploy time for {module.name}")
 
     async def __build_module(self, module):
         t1 = self.record_time()
         await module.build()
-        self.record_time(t1, "Build time for {}".format(module.name))
+        self.record_time(t1, f"Build time for {module.name}")
 
     async def __attest_module(self, module):
         t1 = self.record_time()
         await module.attest()
-        self.record_time(t1, "Attest time for {}".format(module.name))
+        self.record_time(t1, f"Attest time for {module.name}")
 
     async def __establish_connection(self, conn):
         t1 = self.record_time()
         await conn.establish()
-        self.record_time(t1, "Establish time for {}".format(conn.name))
+        self.record_time(t1, f"Establish time for {conn.name}")
 
     async def __register_event(self, event):
         t1 = self.record_time()
         await event.register()
-        self.record_time(t1, "Register time for {}".format(event.name))
+        self.record_time(t1, f"Register time for {event.name}")
 
     async def __transfer_state(self, module, new_module,
                                entry_name, output_name, input_name):
@@ -143,15 +143,14 @@ class Config:
         await module.node.disable_module(module)
         await new_module.node.disable_module(new_module)
 
-        self.record_time(t1, "Transfer time for {}".format(new_module.name))
+        self.record_time(t1, f"Transfer time for {new_module.name}")
 
     async def deploy_priority_modules(self):
         priority_modules = [
             sm for sm in self.modules if sm.priority is not None and not sm.deployed]
         priority_modules.sort(key=lambda sm: sm.priority)
 
-        logging.debug("Priority modules: {}".format(
-            [sm.name for sm in priority_modules]))
+        logging.debug(f"Priority modules: {[sm.name for sm in priority_modules]}")
         for module in priority_modules:
             await self.__deploy_module(module)
 
@@ -160,9 +159,9 @@ class Config:
         if module:
             mod = self.get_module(module)
             if mod.deployed:
-                raise Error('Module {} already deployed'.format(module))
+                raise Error(f'Module {module} already deployed')
 
-            logging.info("Deploying {}".format(module))
+            logging.info(f"Deploying {module}")
             await self.__deploy_module(mod)
             return
 
@@ -207,7 +206,7 @@ class Config:
         if any(map(lambda x: not x.deployed, to_attest)):
             raise Error("One or more modules to attest are not deployed yet")
 
-        logging.info("To attest: {}".format([x.name for x in to_attest]))
+        logging.info(f"To attest: {[x.name for x in to_attest]}")
 
         futures = map(self.__attest_module, to_attest)
         await asyncio.gather(*futures)
@@ -226,7 +225,7 @@ class Config:
                 not x.to_module.attested, to_connect)):
             raise Error("One or more modules to connect are not attested yet")
 
-        logging.info("To connect: {}".format([x.name for x in to_connect]))
+        logging.info(f"To connect: {[x.name for x in to_connect]}")
 
         futures = map(self.__establish_connection, to_connect)
         await asyncio.gather(*futures)
@@ -243,7 +242,7 @@ class Config:
         if any(map(lambda x: not x.module.attested, to_register)):
             raise Error("One or more modules are not attested yet")
 
-        logging.info("To register: {}".format([x.name for x in to_register]))
+        logging.info(f"To register: {[x.name for x in to_register]}")
 
         futures = map(self.__register_event, to_register)
         await asyncio.gather(*futures)
@@ -270,7 +269,7 @@ class Config:
         module.node = module.old_node
         new_module.old_node = new_module.node
 
-        logging.info("Deploying and attesting new {}".format(module))
+        logging.info(f"Deploying and attesting new {module}")
 
         await self.__deploy_module(new_module)
         await self.__attest_module(new_module)
@@ -289,7 +288,7 @@ class Config:
                        if module in (conn.from_module, conn.to_module)]
 
         for conn in connections:
-            logging.info("Re-establishing connection {} with id {}".format(conn.name, conn.id))
+            logging.info(f"Re-establishing connection {conn.name} with id {conn.id}")
             new_conn = conn.clone()
 
             if new_conn.from_module == module:
@@ -300,13 +299,13 @@ class Config:
             await self.__establish_connection(new_conn)
             self.replace_connection(new_conn)
 
-        self.record_time(t2, "Connect time for {}".format(new_module.name))
+        self.record_time(t2, f"Connect time for {new_module.name}")
 
         # update in conf
         self.replace_module(new_module)
 
         logging.info("Update complete")
-        self.record_time(t1, "Update time for {}".format(new_module.name))
+        self.record_time(t1, f"Update time for {new_module.name}")
 
     def update(self, module, entry_name, output_name, input_name):
         asyncio.get_event_loop().run_until_complete(
@@ -321,7 +320,7 @@ class Config:
         if not previous:
             return t
 
-        print("{}: {:.3f}".format(msg, t - previous))
+        print(f"{msg}: {t - previous:.3f}")
 
         return t
 
@@ -390,9 +389,8 @@ def _load_module(mod_dict, config):
     module = module_funcs[mod_dict['type']](mod_dict, node, old_node)
 
     if node.__class__ not in module.get_supported_nodes():
-        raise Error("Node {} ({}) does not support module {} ({})".format(
-            node.name, node.__class__.__name__,
-            module.name, module.__class__.__name__))
+        raise Error(f"""Node {node.name} ({node.__class__.__name__}) does not
+                    support module {module.name} ({module.__class__.__name__})""")
 
     return module
 
@@ -429,7 +427,7 @@ def evaluate_rules(rules_file, dict_):
             result = False
 
         if not result:
-            logging.error("{} - Broken rule: {}".format(rules_file, r))
+            logging.error(f"{rules_file} - Broken rule: {r}")
             ok = False
 
     if not ok:

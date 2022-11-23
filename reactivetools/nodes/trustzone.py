@@ -85,7 +85,7 @@ class TrustZoneNode(Node):
 
         await self._send_reactive_command(
             command,
-            log='Deploying {} on {}'.format(module.name, self.name)
+            log=f'Deploying {module.name} on {self.name}'
         )
 
         module.deployed = True
@@ -109,20 +109,20 @@ class TrustZoneNode(Node):
 
         res = await self._send_reactive_command(
             command,
-            log='Attesting {}'.format(module.name)
+            log=f'Attesting {module.name}'
         )
 
         # The result format is [tag] where the tag is the challenge's MAC
         challenge_response = res.message.payload
         expected_tag = await Encryption.AES.mac(await module.key, challenge)
         if challenge_response != expected_tag:
-            logging.debug("Key: {}".format(await module.key))
-            logging.debug("Challenge: {}".format(challenge))
-            logging.debug("Resp: {}".format(challenge_response))
-            logging.debug("Expected: {}".format(expected_tag))
-            raise Error('Attestation of {} failed'.format(module.name))
+            logging.debug(f"Key: {await module.key}")
+            logging.debug(f"Challenge: {challenge}")
+            logging.debug(f"Resp: {challenge_response}")
+            logging.debug(f"Expected: {expected_tag}")
+            raise Error(f'Attestation of {module.name} failed')
 
-        logging.info("Attestation of {} succeeded".format(module.name))
+        logging.info(f"Attestation of {module.name} succeeded")
         module.attested = True
 
     async def set_key(self, module, conn_id, conn_io, encryption, key):
@@ -152,10 +152,8 @@ class TrustZoneNode(Node):
 
         await self._send_reactive_command(
             command,
-            log='Setting key of connection {} ({}:{}) on {} to {}'.format(
-                conn_id, module.name, conn_io.name, self.name,
-                binascii.hexlify(key).decode('ascii'))
-        )
+            log=f"""Setting key of connection {conn_id} ({module.name}:{conn_io.name})
+                    on {self.name} to {binascii.hexlify(key).decode('ascii')}""")
 
     def get_module_id(self):
         id_ = self._moduleid

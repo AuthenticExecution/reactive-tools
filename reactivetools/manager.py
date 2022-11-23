@@ -53,8 +53,7 @@ class Manager:
             if self.sp_pubkey is not None:
                 return self.sp_pubkey
 
-            args = "--config {} --request get-pub-key".format(
-                self.config).split()
+            args = f"--config {self.config} --request get-pub-key".split()
             out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
 
             self.sp_pubkey = os.path.join(glob.BUILD_DIR, "manager-sp_pubkey.pem")

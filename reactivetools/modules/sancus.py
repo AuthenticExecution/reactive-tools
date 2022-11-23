@@ -26,7 +26,7 @@ class SancusModule(Module):
     def __init__(self, name, node, old_node, priority, deployed, nonce,
                  attested, files, cflags, ldflags, binary, id_, symtab, key,
                  deploy_name):
-        self.out_dir = os.path.join(glob.BUILD_DIR, "sancus-{}".format(name))
+        self.out_dir = os.path.join(glob.BUILD_DIR, f"sancus-{name}")
         super().__init__(name, node, old_node, priority, deployed, nonce,
                          attested, self.out_dir)
 
@@ -270,7 +270,7 @@ class SancusModule(Module):
             # remove old flag if present, append new one
             ldflags = list(
                 filter(lambda x: "--sm-config-file" not in x, ldflags))
-            ldflags.append("--sm-config-file {}".format(config_file))
+            ldflags.append(f"--sm-config-file {config_file}")
 
         # override num_connections if the value is present and is < self.connections
         if "num_connections" not in config or config["num_connections"] < self.connections:
@@ -285,9 +285,8 @@ class SancusModule(Module):
     async def _calculate_key(self):
         linked_binary = await self.__link()
 
-        args = "{} --gen-sm-key {} --key {}".format(
-            linked_binary, self.deploy_name, dump(self.node.vendor_key)
-        ).split()
+        args = f"""{linked_binary} --gen-sm-key {self.deploy_name}
+                --key {dump(self.node.vendor_key)}""".split()
 
         key, _ = await tools.run_async_output("sancus-crypto", *args)
         logging.info('Module key for %s: %s', self.name, dump(key))
@@ -305,29 +304,26 @@ class SancusModule(Module):
         return linked_binary
 
     async def _get_io_id(self, io_name):
-        sym_name = '__sm_{}_io_{}_idx'.format(self.deploy_name, io_name)
+        sym_name = f'__sm_{self.deploy_name}_io_{io_name}_idx'
         symbol = await self.__get_symbol(sym_name)
 
         if symbol is None:
-            raise Error('Module {} has no endpoint named {}'
-                        .format(self.name, io_name))
+            raise Error(f'Module {self.name} has no endpoint named {io_name}')
 
         return symbol
 
     async def _get_entry_id(self, entry_name):
-        sym_name = '__sm_{}_entry_{}_idx'.format(self.deploy_name, entry_name)
+        sym_name = f'__sm_{self.deploy_name}_entry_{entry_name}_idx'
         symbol = await self.__get_symbol(sym_name)
 
         if symbol is None:
-            raise Error('Module {} has no entry named {}'
-                        .format(self.name, entry_name))
+            raise Error(f'Module {self.name} has no entry named {entry_name}')
 
         return symbol
 
     async def __get_symbol(self, name):
         if not await self.binary:
-            raise Error("ELF file not present for {}, cannot extract symbol ID of {}".format(
-                self.name, name))
+            raise Error(f"Missing ELF file {self.name}, cannot extract symbol ID of {name}")
 
         with open(await self.binary, 'rb') as f:
             elf = elffile.ELFFile(f)
@@ -351,18 +347,16 @@ class SancusModule(Module):
         with open(data_file, "w") as f:
             json.dump(data, f)
 
-        args = "--config {} --request attest-sancus --data {}".format(
-            get_manager().config, data_file).split()
+        args = f"""--config {get_manager().config} --request attest-sancus
+                   --data {data_file}""".split()
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes
 
         if await self.key != key:
-            raise Error(
-                "Received key is different from {} key".format(self.name))
+            raise Error(f"Received key is different from {self.name} key")
 
-        logging.info("Done Remote Attestation of {}. Key: {}".format(
-            self.name, key_arr))
+        logging.info(f"Done Remote Attestation of {self.name}. Key: {key_arr}")
         self.attested = True
 
 _BuildConfig = namedtuple('_BuildConfig', ['cc', 'cflags', 'ld', 'ldflags'])
