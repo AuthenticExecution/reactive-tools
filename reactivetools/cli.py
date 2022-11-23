@@ -473,7 +473,7 @@ def main(raw_args=None):
 
         logging.error(e)
 
-        for task in asyncio.all_tasks():
+        for task in asyncio.Task.all_tasks():
             task.cancel()
 
         sys.exit(-1)
