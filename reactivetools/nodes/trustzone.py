@@ -94,6 +94,7 @@ class TrustZoneNode(Node):
         assert module.node is self
 
         module_id = await module.get_id()
+        module_key = await module.key
 
         challenge = tools.generate_key(16)
 
@@ -114,9 +115,9 @@ class TrustZoneNode(Node):
 
         # The result format is [tag] where the tag is the challenge's MAC
         challenge_response = res.message.payload
-        expected_tag = await Encryption.AES.mac(await module.key, challenge)
+        expected_tag = await Encryption.AES.mac(module_key, challenge)
         if challenge_response != expected_tag:
-            logging.debug(f"Key: {await module.key}")
+            logging.debug(f"Key: {module_key}")
             logging.debug(f"Challenge: {challenge}")
             logging.debug(f"Resp: {challenge_response}")
             logging.debug(f"Expected: {expected_tag}")
