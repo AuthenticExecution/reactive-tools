@@ -272,8 +272,15 @@ class TrustZoneModule(Module):
         with open(data_file, "w") as f:
             json.dump(data, f)
 
-        args = f"""--config {get_manager().config} --request attest-trustzone
-                   --data {data_file}""".split()
+        args = [
+            "--config",
+            get_manager().config,
+            "--request",
+            "attest-trustzone",
+            "--data",
+            data_file
+        ]
+
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes

@@ -389,8 +389,8 @@ def _load_module(mod_dict, config):
     module = module_funcs[mod_dict['type']](mod_dict, node, old_node)
 
     if node.__class__ not in module.get_supported_nodes():
-        raise Error(f"""Node {node.name} ({node.__class__.__name__}) does not
-                    support module {module.name} ({module.__class__.__name__})""")
+        raise Error(f"Node {node.name} ({node.__class__.__name__}) does not " \
+                    f"support module {module.name} ({module.__class__.__name__})")
 
     return module
 

@@ -189,8 +189,8 @@ class Node(ABC):
 
         response = await self._send_reactive_command(
             command,
-            log=f"""Sending call command to {module.name}:{entry}
-                    ({module_id}:{entry_id}) on {self.name}"""
+            log=f"Sending call command to {module.name}:{entry}" \
+                f" ({module_id}:{entry_id}) on {self.name}"
         )
 
         if not response.ok():
@@ -239,9 +239,9 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log=f"""Sending handle_output command of connection
-                    {connection.id}:{connection.name} to {connection.to_module.name} 
-                    on {self.name}"""
+            log=f"Sending handle_output command of connection" \
+                f" {connection.id}:{connection.name} to {connection.to_module.name}" \
+                f" on {self.name}"
         )
 
     async def request(self, connection, arg=None, output=None):
@@ -279,9 +279,9 @@ class Node(ABC):
 
         response = await self._send_reactive_command(
             command,
-            log=f"""Sending handle_request command of connection
-                    {connection.id}:{connection.name} to 
-                    {connection.to_module.name} on {self.name}"""
+            log=f"Sending handle_request command of connection" \
+                f" {connection.id}:{connection.name} to" \
+                f" {connection.to_module.name} on {self.name}"
         )
 
         if not response.ok():
@@ -328,8 +328,8 @@ class Node(ABC):
 
         await self._send_reactive_command(
             command,
-            log=f"""Sending RegisterEntrypoint command of
-                    {module.name}:{entry} ({module_id}:{entry_id}) on {self.name}"""
+            log=f"Sending RegisterEntrypoint command of" \
+                f" {module.name}:{entry} ({module_id}:{entry_id}) on {self.name}"
         )
 
     async def disable_module(self, module):
@@ -406,8 +406,8 @@ class Node(ABC):
         if command.has_response():
             response = await command.send_wait()
             if not response.ok():
-                raise Error(f"""Reactive command {str(command.code)} failed
-                                with code {str(response.code)}""")
+                raise Error(f"Reactive command {str(command.code)} failed " \
+                            f"with code {str(response.code)}")
             return response
 
         await command.send()

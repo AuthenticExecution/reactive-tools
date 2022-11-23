@@ -153,8 +153,8 @@ class TrustZoneNode(Node):
 
         await self._send_reactive_command(
             command,
-            log=f"""Setting key of connection {conn_id} ({module.name}:{conn_io.name})
-                    on {self.name} to {binascii.hexlify(key).decode('ascii')}""")
+            log=f"Setting key of connection {conn_id} ({module.name}:{conn_io.name})" \
+                f" on {self.name} to {binascii.hexlify(key).decode('ascii')}")
 
     def get_module_id(self):
         id_ = self._moduleid

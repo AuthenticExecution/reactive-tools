@@ -160,6 +160,6 @@ class SancusNode(Node):
 
         await self._send_reactive_command(
             command,
-            log=f"""Setting key of {module.name}:{conn_io.name} on {self.name}
-                    to {binascii.hexlify(key).decode('ascii')}"""
+            log=f"Setting key of {module.name}:{conn_io.name} on {self.name}" \
+                f" to {binascii.hexlify(key).decode('ascii')}"
         )

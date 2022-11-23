@@ -407,8 +407,15 @@ class SGXModule(Module):
         data_file = os.path.join(self.out_dir, "attest.json")
         DescriptorType.JSON.dump(data_file, data)
 
-        args = f"""--config {get_manager().config} --request attest-sgx
-                   --data {data_file}""".split()
+        args = [
+            "--config",
+            get_manager().config,
+            "--request",
+            "attest-sgx",
+            "--data",
+            data_file
+        ]
+
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes

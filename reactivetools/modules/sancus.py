@@ -285,8 +285,13 @@ class SancusModule(Module):
     async def _calculate_key(self):
         linked_binary = await self.__link()
 
-        args = f"""{linked_binary} --gen-sm-key {self.deploy_name}
-                --key {dump(self.node.vendor_key)}""".split()
+        args = [
+            linked_binary,
+            "--gen-sm-key",
+            self.deploy_name,
+            "--key",
+            dump(self.node.vendor_key)
+        ]
 
         key, _ = await tools.run_async_output("sancus-crypto", *args)
         logging.info('Module key for %s: %s', self.name, dump(key))
@@ -347,8 +352,15 @@ class SancusModule(Module):
         with open(data_file, "w") as f:
             json.dump(data, f)
 
-        args = f"""--config {get_manager().config} --request attest-sancus
-                   --data {data_file}""".split()
+        args = [
+            "--config",
+            get_manager().config,
+            "--request",
+            "attest-sancus",
+            "--data",
+            data_file
+        ]
+
         out, _ = await tools.run_async_output(glob.ATTMAN_CLI, *args)
         key_arr = eval(out)  # from string to array
         key = bytes(key_arr)  # from array to bytes

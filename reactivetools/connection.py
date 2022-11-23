@@ -178,7 +178,7 @@ class Connection:
     def generate_key(module1, module2, encryption):
         if (module1 is not None and encryption not in module1.get_supported_encryption()) \
                 or encryption not in module2.get_supported_encryption():
-            raise Error(f"""Encryption {str(encryption)} not supported
-                            between {module1.name} and {module2.name}""")
+            raise Error(f"Encryption {str(encryption)} not supported " \
+                        f"between {module1.name} and {module2.name}")
 
         return tools.generate_key(encryption.get_key_size())
