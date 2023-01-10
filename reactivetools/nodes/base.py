@@ -368,6 +368,25 @@ class Node(ABC):
             log=f'Sending disable command to module {module.name}'
         )
 
+    async def reset(self):
+        """
+        ### Description ###
+        Coroutine. Reset node, deleting all running modules and connections
+
+        ### Parameters ###
+        self: Node object
+
+        ### Returns ###
+        """
+        command = CommandMessage(ReactiveCommand.Reset,
+                                 Message(),
+                                 self.ip_address,
+                                 self.reactive_port)
+
+        await self._send_reactive_command(
+            command,
+            log=f'Resetting node {self.name}')
+
     async def _send_reactive_command(self, command, log=None):
         """
         ### Description ###

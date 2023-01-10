@@ -311,6 +311,25 @@ class Config:
         asyncio.get_event_loop().run_until_complete(
             self.update_async(module, entry_name, output_name, input_name))
 
+    def reset(self):
+        asyncio.get_event_loop().run_until_complete(
+            self.reset_async())
+
+    async def reset_async(self):
+        logging.info(f"To reset: {[x.name for x in self.nodes]}")
+        
+        # disable modules first
+        futures = [
+            module.node.disable_module(module) 
+            for module in self.modules
+            if module.deployed and module.attested
+        ]
+        await asyncio.gather(*futures)
+
+        # delete nodes then
+        futures = [node.reset() for node in self.nodes]
+        await asyncio.gather(*futures)
+
     def record_time(self, previous=None, msg=None):
         if not self.measure_time:
             return None

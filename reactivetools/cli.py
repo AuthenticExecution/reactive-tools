@@ -274,6 +274,15 @@ def _parse_args(args):
         '--input',
         help='Input of the new module to connect (for state transfer)')
 
+    # reset
+    reset_parser = subparsers.add_parser(
+        'reset',
+        help='Reset nodes, deleting all modules and connections')
+    reset_parser.set_defaults(command_handler=_handle_reset)
+    reset_parser.add_argument(
+        'config',
+        help='Specify configuration file to use') 
+
     return parser.parse_args(args)
 
 
@@ -449,6 +458,15 @@ def _handle_update(args):
     out_file = args.result or args.config
     logging.info('Writing post-deployment configuration to %s', out_file)
     config.dump_config(conf, out_file)
+    conf.cleanup()
+
+
+def _handle_reset(args):
+    logging.info('Resetting nodes')
+
+    conf = config.load(args.config, args.manager, args.timing)
+    conf.reset()
+
     conf.cleanup()
 
 
