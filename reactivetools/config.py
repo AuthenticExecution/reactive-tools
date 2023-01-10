@@ -317,10 +317,10 @@ class Config:
 
     async def reset_async(self):
         logging.info(f"To reset: {[x.name for x in self.nodes]}")
-        
+
         # disable modules first
         futures = [
-            module.node.disable_module(module) 
+            module.node.disable_module(module)
             for module in self.modules
             if module.deployed and module.attested
         ]

@@ -281,7 +281,7 @@ def _parse_args(args):
     reset_parser.set_defaults(command_handler=_handle_reset)
     reset_parser.add_argument(
         'config',
-        help='Specify configuration file to use') 
+        help='Specify configuration file to use')
 
     return parser.parse_args(args)
 
