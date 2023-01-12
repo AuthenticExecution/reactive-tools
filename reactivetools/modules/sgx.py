@@ -22,7 +22,7 @@ ROOT_CA_URL = "https://certificates.trustedservices.intel.com/Intel_SGX_Attestat
 SGX_TARGET = "x86_64-fortanix-unknown-sgx"
 BUILD_APP = "cargo build {{}} {{}} --target={} --manifest-path={{}}/Cargo.toml".format(
     SGX_TARGET)
-CONVERT_SGX = "ftxsgx-elf2sgxs {} --heap-size 0x20000 --stack-size 0x20000 --threads 4 {}"
+CONVERT_SGX = "ftxsgx-elf2sgxs {} --heap-size 0x800000 --stack-size 0x800000 --threads 4 {}"
 SIGN_SGX = "sgxs-sign --key {} {} {} {}" # use default values
 
 
