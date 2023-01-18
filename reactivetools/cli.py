@@ -115,6 +115,10 @@ def _parse_args(args):
         '--result',
         help='File to write the resulting configuration to')
     attest_parser.add_argument(
+        '--attest-in-order',
+        help='Attest modules in the order they are found in the config file',
+        action='store_true')
+    attest_parser.add_argument(
         '--output',
         help='Output file type, between JSON and YAML',
         default=None)
@@ -134,6 +138,10 @@ def _parse_args(args):
     connect_parser.add_argument(
         '--result',
         help='File to write the resulting configuration to')
+    connect_parser.add_argument(
+        '--connect-in-order',
+        help='Establish connections in the order they are found in the config file',
+        action='store_true')
     connect_parser.add_argument(
         '--output',
         help='Output file type, between JSON and YAML',
@@ -319,7 +327,7 @@ def _handle_attest(args):
 
     conf = config.load(args.config, args.manager, args.timing, args.output)
 
-    conf.attest(args.module)
+    conf.attest(args.attest_in_order, args.module)
 
     out_file = args.result or args.config
     logging.info('Writing post-deployment configuration to %s', out_file)
@@ -332,7 +340,7 @@ def _handle_connect(args):
 
     conf = config.load(args.config, args.manager, args.timing, args.output)
 
-    conf.connect(args.connection)
+    conf.connect(args.connect_in_order, args.connection)
 
     out_file = args.result or args.config
     logging.info('Writing post-deployment configuration to %s', out_file)

@@ -198,7 +198,7 @@ class Config:
     def build(self, module):
         asyncio.get_event_loop().run_until_complete(self.build_async(module))
 
-    async def attest_async(self, module):
+    async def attest_async(self, in_order, module):
         lst = self.modules if not module else [self.get_module(module)]
 
         to_attest = list(filter(lambda x: not x.attested, lst))
@@ -208,13 +208,19 @@ class Config:
 
         logging.info(f"To attest: {[x.name for x in to_attest]}")
 
-        futures = map(self.__attest_module, to_attest)
-        await asyncio.gather(*futures)
+        # If attestation in order is desired, attest one module at a time
+        if in_order:
+            for m in to_attest:
+                await self.__attest_module(m)
+        # Otherwise, attest all modules concurrently
+        else:
+            futures = map(self.__attest_module, to_attest)
+            await asyncio.gather(*futures)
 
-    def attest(self, module):
-        asyncio.get_event_loop().run_until_complete(self.attest_async(module))
+    def attest(self, in_order, module):
+        asyncio.get_event_loop().run_until_complete(self.attest_async(in_order, module))
 
-    async def connect_async(self, conn):
+    async def connect_async(self, in_order, conn):
         lst = self.connections if not conn else [
             self.get_connection_by_name(conn)]
 
@@ -227,11 +233,17 @@ class Config:
 
         logging.info(f"To connect: {[x.name for x in to_connect]}")
 
-        futures = map(self.__establish_connection, to_connect)
-        await asyncio.gather(*futures)
+        # If establishment in order is desired, establish one connection at a time
+        if in_order:
+            for c in to_connect:
+                await self.__establish_connection(c)
+        # Otherwise, establish all connections concurrently
+        else:
+            futures = map(self.__establish_connection, to_connect)
+            await asyncio.gather(*futures)
 
-    def connect(self, conn):
-        asyncio.get_event_loop().run_until_complete(self.connect_async(conn))
+    def connect(self, in_order, conn):
+        asyncio.get_event_loop().run_until_complete(self.connect_async(in_order, conn))
 
     async def register_async(self, event):
         lst = self.periodic_events if not event else [
